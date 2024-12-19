@@ -1,5 +1,5 @@
 # install locations
-PREFIX = /usr/local
+PREFIX = $(HOME)/INSTALL/hare/latest
 BINDIR = $(PREFIX)/bin
 MANDIR = $(PREFIX)/share/man
 SRCDIR = $(PREFIX)/src
