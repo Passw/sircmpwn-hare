@@ -16,22 +16,20 @@ export let args: []str = [];
 let args_static: [32]str = [""...];
 
 @init fn args() void = {
-	if (rt::argc < len(args_static)) {
-		args = args_static[..rt::argc];
-		for (let i = 0z; i < rt::argc; i += 1) {
-			args[i] = c::tostr(rt::argv[i]: *const c::char)!;
-		};
+	if (rt::argc <= len(args_static)) {
+		args = args_static[..0];
 	} else {
 		args = alloc([], rt::argc)!;
-		for (let i = 0z; i < rt::argc; i += 1) {
-			append(args, c::tostr(rt::argv[i]: *const c::char)!)!;
-		};
+	};
+
+	for (let i = 0z; i < rt::argc; i += 1) {
+		static append(args, c::tostr(rt::argv[i]: *const c::char)!)!;
 	};
 
 };
 
 @fini fn args() void = {
-	if (rt::argc >= len(args_static)) {
+	if (rt::argc > len(args_static)) {
 		free(args);
 	};
 };
