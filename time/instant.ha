@@ -40,6 +40,7 @@ export fn new(sec: i64, nsec: i64 = 0) instant = instant {
 };
 
 // Creates a new [[instant]] using a nanosecond value from an abitrary epoch.
-export fn from_nsec(nsec: i64) instant = {
-	return add(INSTANT_ZERO, nsec);
+export fn from_nsec(nsec: i64) instant = instant {
+	sec = nsec / SECOND,
+	nsec = nsec % SECOND,
 };
