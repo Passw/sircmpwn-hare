@@ -112,16 +112,3 @@ fn printframe(
 
 	print_context(path, line, col, imgstat.mtime);
 };
-
-fn printframe_with_symbol(
-	sym: *elf::sym64,
-	name: str,
-	path: str,
-	loc: (uint, uint),
-	pc: uintptr,
-) void = {
-	_ = fmt::errorfln("{}:{}:{} {}+0x{:x} [0x{:x}]",
-		path, loc.0, loc.1, symname_to_ident(name),
-		pc - sym.st_value: uintptr, pc);
-	_ = fmt::errorln();
-};
