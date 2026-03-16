@@ -6,6 +6,12 @@ use strings;
 // Converts a symbol name to a Hare identifier. The return value is statically
 // allocated.
 export fn symname_to_ident(name: str) const str = {
+	if (strings::hasprefix(name, "initfunc.")
+			|| strings::hasprefix(name, "finifunc.")
+			|| strings::hasprefix(name, "testfunc.")) {
+		return name;
+	};
+
 	// the actual limit for the length of a hare identifier is much lower
 	// than this (382, to be exact), but we want to accomodate for all
 	// possible symbols, hence why the buffer's capacity is MAX_SYMNAME * 2
