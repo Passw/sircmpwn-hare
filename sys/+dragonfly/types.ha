@@ -309,7 +309,7 @@ export def FIODNAME: u64 = 0x80106678;		// get name of device on that fildesc
 // argument for ioctl FIODNAME
 export type fiodname_args = struct {
 	name: *opaque,
-        length: uint,
+	length: uint,
 };
 
 export type rusage = struct {

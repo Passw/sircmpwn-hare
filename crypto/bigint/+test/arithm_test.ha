@@ -87,12 +87,12 @@ use bytes;
 	reduce(x, a, m);
 	assert(equalshex(x, "14786ead"));
 
-    let m = fromhex("ff");
-    defer free(m);
-    let a = fromhex("0100000001");
-    defer free(a);
-    let x = fromhex("00");
-    defer free(x);
+	let m = fromhex("ff");
+	defer free(m);
+	let a = fromhex("0100000001");
+	defer free(a);
+	let x = fromhex("00");
+	defer free(x);
 	reduce(x, a, m);
 	assert(equalshex(x, "02"));
 };
