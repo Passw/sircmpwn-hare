@@ -25,15 +25,15 @@ fn version(name: str, cmd: *getopt::command) (void | error) = {
 
 	switch (verbose) {
 	case 0 =>
-		fmt::printfln("hare {}", VERSION)!;
+		fmt::printfln("hare {}", VERSION)?;
 	case 1 =>
-		fmt::printfln("hare {}", VERSION)!;
+		fmt::printfln("hare {}", VERSION)?;
 
 		fmt::printfln("build tags:\n\t+{}\n\t+{}",
 			build_arch.name, build_platform)?;
 
 		fmt::printfln("tool paths{}:",
-			if (os::getenv("HARE_TOOLPATH") is str) " (from environment)" else "")!;
+			if (os::getenv("HARE_TOOLPATH") is str) " (from environment)" else "")?;
 		let tok = strings::tokenize(toolpaths, ":");
 		for (let s => strings::next_token(&tok)) {
 			fmt::printfln("\t{}", s)?;
@@ -62,10 +62,10 @@ fn version(name: str, cmd: *getopt::command) (void | error) = {
 		const toolpaths = shlex::quotestr(toolpaths);
 		defer free(toolpaths);
 
-		fmt::printfln(`VERSION={}`, version)!;
-		fmt::printfln(`DEFAULT_TAGS="+{}+{}"`, build_arch.name, build_platform)!;
-		fmt::printfln(`HARE_TOOLPATH={}`, toolpaths)!;
-		fmt::printfln(`HAREPATH={}`, harepath)!;
+		fmt::printfln(`VERSION={}`, version)?;
+		fmt::printfln(`DEFAULT_TAGS="+{}+{}"`, build_arch.name, build_platform)?;
+		fmt::printfln(`HARE_TOOLPATH={}`, toolpaths)?;
+		fmt::printfln(`HAREPATH={}`, harepath)?;
 
 		let toolchains: []str = [];
 		defer free(toolchains);
@@ -76,7 +76,7 @@ fn version(name: str, cmd: *getopt::command) (void | error) = {
 
 		const toolchains = strings::join(" ", toolchains...)!;
 		defer free(toolchains);
-		fmt::printfln(`TOOLCHAINS="{}"`, toolchains)!;
+		fmt::printfln(`TOOLCHAINS="{}"`, toolchains)?;
 
 		for (let arch .. arches) {
 			const name = ascii::strupper(arch.name)!;
