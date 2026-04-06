@@ -21,6 +21,7 @@ fn version(name: str, cmd: *getopt::command) (void | error) = {
 	let build_arch = os::arch_name(os::architecture());
 	let build_arch = get_arch(build_arch)!;
 	let build_platform = ascii::strlower(os::sysname())!;
+	defer free(build_platform);
 	const toolpaths = os::tryenv("HARE_TOOLPATH", TOOLDIR);
 
 	switch (verbose) {
@@ -80,12 +81,12 @@ fn version(name: str, cmd: *getopt::command) (void | error) = {
 
 		for (let arch .. arches) {
 			const name = ascii::strupper(arch.name)!;
-			const as_cmd = shlex::quotestr(arch.as_cmd);
-			const cc_cmd = shlex::quotestr(arch.cc_cmd);
-			const ld_cmd = shlex::quotestr(arch.ld_cmd);
 			defer free(name);
+			const as_cmd = shlex::quotestr(arch.as_cmd);
 			defer free(as_cmd);
+			const cc_cmd = shlex::quotestr(arch.cc_cmd);
 			defer free(cc_cmd);
+			const ld_cmd = shlex::quotestr(arch.ld_cmd);
 			defer free(ld_cmd);
 
 			fmt::printfln("{}_AS={}", name, as_cmd)?;
