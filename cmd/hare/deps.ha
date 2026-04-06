@@ -6,6 +6,7 @@ use getopt;
 use hare::ast;
 use hare::module;
 use hare::parse;
+use io;
 use os;
 use path;
 use sort;
@@ -89,40 +90,40 @@ fn deps(name: str, cmd: *getopt::command) (void | error) = {
 
 	switch (goal) {
 	case deps_fmt::TERM =>
-		deps_graph(&mods, direct);
+		deps_graph(&mods, direct)?;
 	case deps_fmt::DOT =>
-		fmt::println("strict digraph deps {")!;
+		fmt::println("strict digraph deps {")?;
 		for (let mod .. mods) {
 			if (mod.is_dep && direct) {
 				continue;
 			};
 			if (module::gathered(&mod) && len(mod.deps) == 0) {
-				fmt::printfln("\t\"{}\"", mod.name)!;
+				fmt::printfln("\t\"{}\"", mod.name)?;
 			} else for (let dep .. mod.deps) {
 				const child = mods[dep.0];
 				fmt::printfln("\t\"{}\" -> \"{}\";",
-					mod.name, child.name)!;
+					mod.name, child.name)?;
 			};
 		};
-		fmt::println("}")!;
+		fmt::println("}")?;
 	case deps_fmt::TEXT =>
 		for (let mod .. mods) {
 			if (mod.is_dep && direct) {
 				continue;
 			};
 			if (module::gathered(&mod) && len(mod.deps) == 0) {
-				fmt::printfln("{} -", mod.name)!;
+				fmt::printfln("{} -", mod.name)?;
 			} else for (let dep .. mod.deps) {
 				const child = mods[dep.0];
-				fmt::printfln("{} {}", mod.name, child.name)!;
+				fmt::printfln("{} {}", mod.name, child.name)?;
 			};
 		};
 	};
 };
 
-fn deps_graph(mods: *[]module::module, direct: bool) void = {
+fn deps_graph(mods: *[]module::module, direct: bool) (void | io::error) = {
 	if (len(mods) == 1 && len(mods[0].deps) == 0) {
-		fmt::println(mods[0].name, "has no dependencies")!;
+		fmt::println(mods[0].name, "has no dependencies")?;
 		return;
 	};
 
@@ -171,12 +172,12 @@ fn deps_graph(mods: *[]module::module, direct: bool) void = {
 				};
 			};
 			color = (color.1, next_color(color.1));
-			if (!no_color) fmt::printf("\x1b[{}m", color.0)!;
-			fmt::print(if (passing) "│  " else "   ")!;
-			if (!no_color) fmt::print("\x1b[m")!;
+			if (!no_color) fmt::printf("\x1b[{}m", color.0)?;
+			fmt::print(if (passing) "│  " else "   ")?;
+			if (!no_color) fmt::print("\x1b[m")?;
 		};
 		if (i < len(mods) - 1) {
-			fmt::println()!;
+			fmt::println()?;
 		};
 		color = (0, 31);
 
@@ -204,18 +205,18 @@ fn deps_graph(mods: *[]module::module, direct: bool) void = {
 			if (final || connected || (!on_path && passing)) {
 				color.0 = color.1;
 			};
-			if (!no_color) fmt::printf("\x1b[{}m", color.0)!;
+			if (!no_color) fmt::printf("\x1b[{}m", color.0)?;
 			fmt::print(
 				if (final) "└──"
 				else if (connected) "├──"
 				else if (on_path) "───"
 				else if (passing) "│  "
 				else "   "
-			)!;
-			if (!no_color) fmt::print("\x1b[m")!;
+			)?;
+			if (!no_color) fmt::print("\x1b[m")?;
 			color.1 = next_color(color.1);
 		};
-		fmt::println(mods[i].name)!;
+		fmt::println(mods[i].name)?;
 		if (mods[i].is_dep && direct) {
 			continue;
 		};
