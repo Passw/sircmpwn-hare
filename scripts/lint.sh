@@ -8,6 +8,10 @@ find . -name '*.ha' ! -path ./hare/parse/doc/+test.ha | while read -r f; do
 			print "trailing whitespace in " FILENAME
 			exit 1
 		}
+		/^(\t* \t| )/ {
+			print "spaces used for indentation in " FILENAME
+			exit 1
+		}
 		state == "start" {
 			if ($0 !~ /^\/\/ SPDX-License-Identifier: /) {
 				print "missing copyright header in " FILENAME
