@@ -45,24 +45,29 @@ export fn malloc(n: size) nullable *opaque = {
 	let bin = size_getbin(n), sz = bin_getsize(bin);
 	let m = match (heap.bins[bin]) {
 	case null =>
-		if (heap.cur_chunk.1 + META + sz + META > CHUNKSZ) {
+		const overhead = META + sz + META;
+		const cur = heap.cur_chunk;
+
+		if (
+			cur is null
+			|| (cur: *chunk).padding.cursor + overhead > CHUNKSZ
+		) {
 			// No space left in this chunk, allocate a new one
 			match (segmalloc(CHUNKSZ)) {
 			case null =>
 				return null;
 			case let p: *opaque =>
-				heap.cur_chunk = (p: *chunk, size(size));
+				let p = p: *chunk;
+				heap_append_chunk(heap, p);
 			};
 		};
 
 		// Allocate a new block from the currently-active chunk
-		let m = &heap.cur_chunk.0.data[heap.cur_chunk.1]: *meta;
-		heap.cur_chunk.1 += META + sz;
-		m.sz = sz;
-		*(&m.user[sz]: *size) = sz;
-		yield m;
+		yield chunk_push_object(heap.cur_chunk: *chunk, sz);
 	case let m: *meta =>
 		// Pop a block off the freelist
+		let chk = meta_getchunk(m);
+		chk.padding.allocs += 1;
 		heap.bins[bin] = meta_next(m);
 		checkpoison(m, sz);
 		m.sz = sz;
@@ -90,11 +95,36 @@ export @symbol("rt.free") fn free_(p: nullable *opaque) void = {
 		return;
 	};
 
-	// Push onto freelist
-	let bin = size_getbin(m.sz);
-	m.user[..m.sz] = [POISON...];
-	m.next = heap.bins[bin]: uintptr | 0b1;
-	heap.bins[bin] = m;
+	let chk = meta_getchunk(m);
+	chk.padding.allocs -= 1;
+
+	if (chk.padding.allocs == 0) {
+		for (let bin = 0; bin < 9; bin += 1) {
+			const bm = heap.bins[bin];
+			heap.bins[bin] = prune_chunk_from_bin(bm, chk);
+		};
+
+		// If the chunk to free is the current chunk of the heap, the
+		// pointer is adjusted to point to the previous one. There must
+		// not be a next chunk because [[heap.cur_chunk]] points to the
+		// chunk allocated last.
+		if (heap.cur_chunk == chk) {
+			assert(
+				chk.padding.next is null,
+				"chunk should be the last on the list"
+			);
+			heap.cur_chunk = chk.padding.previous;
+		};
+
+		chk_remove_from_list(chk);
+		segfree(chk, CHUNKSZ);
+	} else {
+		// Push onto freelist
+		let bin = size_getbin(m.sz);
+		m.user[..m.sz] = [POISON...];
+		m.next = heap.bins[bin]: uintptr | 0b1;
+		heap.bins[bin] = m;
+	};
 };
 
 // Changes the allocation size of a pointer to n bytes. If n is smaller than
@@ -137,6 +167,110 @@ export fn getmeta(p: *opaque) *meta = {
 	return m;
 };
 
+
+// Get the chunk in which the pointer lives.
+fn meta_getchunk(m: *meta) *chunk = {
+	const mptr = &m.user: uintptr & ~0b1;
+
+	let cur = heap.cur_chunk;
+
+	for (cur != null; cur = (cur: *chunk).padding.previous) {
+		const cur_chunk = cur as *chunk;
+		const chkptr = &cur_chunk.data: uintptr;
+
+		if (mptr >= chkptr && mptr < chkptr + CHUNKSZ) {
+			return cur_chunk;
+		};
+	};
+
+	abort("the pointer doesn't reference an object on the heap");
+};
+
+// Remove all meta nodes from the given bin which data lives in the given chunk.
+fn prune_chunk_from_bin(bin: nullable *meta, chk: *chunk) nullable *meta = {
+	let first_valid: nullable *meta = null;
+	let last_valid: nullable *meta = null;
+
+	const chkptr = &chk.data: uintptr;
+	const chkendptr = chkptr + CHUNKSZ;
+
+	for (bin != null; bin = meta_next(bin as *meta)) {
+		const m = bin as *meta;
+		const mptr = &m.user: uintptr;
+		if (mptr < chkptr || mptr > chkendptr) {
+			// The first pointer found that doesn't live in the
+			// given chunk is now the new value of the bin pointer.
+			if (first_valid is null) {
+				first_valid = m;
+			};
+
+			// Ensure the last valid pointer now points to this
+			// valid pointer (removing those found in the meantime).
+			if (!(last_valid is null)) {
+				let lv = last_valid: *meta;
+				lv.next = m: uintptr | 0b1;
+			};
+
+			last_valid = m;
+		};
+	};
+
+	if (!(last_valid is null)) {
+		let lv = last_valid: *meta;
+		lv.next = null: uintptr | 0b1;
+	};
+
+	return first_valid;
+};
+
+// Append a chunk to the heap's list of chunks.
+// The heap's current chunk now points to this chunk.
+fn heap_append_chunk(heap: *memory_heap, chk: *chunk) void = {
+	chk.padding.allocs = 0;
+	chk.padding.cursor = size(chunk_padding);
+	chk.padding.previous = heap.cur_chunk;
+	chk.padding.next = null;
+
+	match (heap.cur_chunk) {
+	case null => void;
+	case let c: *chunk =>
+		c.padding.next = chk;
+	};
+
+	heap.cur_chunk = chk;
+};
+
+// Push a new object of the given size in the chunk.
+// No allocation is performed, only the cursor of the chunk is adjusted and a
+// pointer to the metadata of the object is return.
+fn chunk_push_object(chk: *chunk, sz: size) *meta = {
+	let m = &chk.data[chk.padding.cursor]: *meta;
+	chk.padding.cursor += META + sz;
+	m.sz = sz;
+	*(&m.user[sz]: *size) = sz;
+	chk.padding.allocs += 1;
+	return m;
+};
+
+// Remove the given chunk from the linked-list of chunks it is part of.
+// The previous and next chunks of the list are linked together, effectively
+// removing the current chunk.
+fn chk_remove_from_list(chk: *chunk) void = {
+	let prev = chk.padding.previous;
+	let next = chk.padding.next;
+
+	match (prev) {
+	case null => void;
+	case let p: *chunk =>
+		p.padding.next = next;
+	};
+
+	match (next) {
+	case null => void;
+	case let n: *chunk =>
+		n.padding.previous = prev;
+	};
+};
 
 // Find the maximum allocation size for a given bin.
 fn bin_getsize(bin: size) size = {

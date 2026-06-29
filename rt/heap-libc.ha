@@ -1,9 +1,21 @@
 // SPDX-License-Identifier: MPL-2.0
 // (c) Hare authors <https://harelang.org>
 
+// Header of a [[chunk]] which counts the number of active allocations and links
+// to the previous and next chunks.
+export type chunk_padding = struct {
+	// Number of currently active allocations.
+	allocs: size,
+	// Offset in the chunk at which the last allocated object ends.
+	cursor: size,
+	_: size,
+	previous: nullable *chunk,
+	next: nullable *chunk,
+};
+
 // A group of blocks that were allocated together.
 export type chunk = union {
-	padding: size, // TODO: track number of active allocations here
+	padding: chunk_padding,
 	data: [*]u8,
 };
 
@@ -23,7 +35,7 @@ export type memory_heap = struct {
 	bins: [9]nullable *meta,
 	// The chunk to allocate from if there are no blocks available in the
 	// right freelist.
-	cur_chunk: (*chunk, size),
+	cur_chunk: nullable *chunk,
 };
 
 // An empty memory heap, used to initialize a [[memory_heap]] for use with
@@ -31,7 +43,7 @@ export type memory_heap = struct {
 export def EMPTY_HEAP = memory_heap {
 	cur_allocs = 0,
 	bins = [null...],
-	cur_chunk = (null: *chunk, CHUNKSZ),
+	cur_chunk = null,
 };
 
 let static_heap = EMPTY_HEAP;
