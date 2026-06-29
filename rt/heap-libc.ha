@@ -3,19 +3,18 @@
 
 // Header of a [[chunk]] which counts the number of active allocations and links
 // to the previous and next chunks.
-export type chunk_padding = struct {
-	// Number of currently active allocations.
-	allocs: size,
+export type chunk_header = struct {
 	// Offset in the chunk at which the last allocated object ends.
-	cursor: size,
-	_: size,
 	previous: nullable *chunk,
 	next: nullable *chunk,
+	cursor: u32,
+	// Number of currently active allocations.
+	allocs: u32,
 };
 
 // A group of blocks that were allocated together.
 export type chunk = union {
-	padding: chunk_padding,
+	padding: chunk_header,
 	data: [*]u8,
 };
 

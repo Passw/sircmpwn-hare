@@ -3,7 +3,7 @@
 
 fn alloc_chunk() *chunk = {
 	let chk = segmalloc(CHUNKSZ) as *opaque: *chunk;
-	chk.padding.cursor = size(chunk_padding);
+	chk.padding.cursor = size(chunk_header): u32;
 	chk.padding.allocs = 0;
 	chk.padding.previous = null;
 	chk.padding.next = null;
@@ -44,11 +44,11 @@ fn alloc_chunk() *chunk = {
 	defer segfree(cp: *opaque, CHUNKSZ);
 
 	let data = &cp.data[0]: uintptr;
-	assert(cp.padding.cursor == size(chunk_padding));
+	assert(cp.padding.cursor == size(chunk_header));
 
 	const m = chunk_push_object(cp, 100);
 
-	assert(m: uintptr == data + size(chunk_padding));
+	assert(m: uintptr == data + size(chunk_header));
 	assert(m.sz == 100);
 
 	let ptr = &m.user[0]: uintptr;

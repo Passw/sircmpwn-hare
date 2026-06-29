@@ -227,7 +227,7 @@ fn prune_chunk_from_bin(bin: nullable *meta, chk: *chunk) nullable *meta = {
 // The heap's current chunk now points to this chunk.
 fn heap_append_chunk(heap: *memory_heap, chk: *chunk) void = {
 	chk.padding.allocs = 0;
-	chk.padding.cursor = size(chunk_padding);
+	chk.padding.cursor = size(chunk_header): u32;
 	chk.padding.previous = heap.cur_chunk;
 	chk.padding.next = null;
 
@@ -245,7 +245,7 @@ fn heap_append_chunk(heap: *memory_heap, chk: *chunk) void = {
 // pointer to the metadata of the object is return.
 fn chunk_push_object(chk: *chunk, sz: size) *meta = {
 	let m = &chk.data[chk.padding.cursor]: *meta;
-	chk.padding.cursor += META + sz;
+	chk.padding.cursor += (META + sz): u32;
 	m.sz = sz;
 	*(&m.user[sz]: *size) = sz;
 	chk.padding.allocs += 1;
