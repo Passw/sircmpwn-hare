@@ -88,7 +88,7 @@ export fn addcontrol(
 	newbuf[0].cmsg_len = cmsg_len(length): uint;
 	newbuf[0].cmsg_level = level;
 	newbuf[0].cmsg_type = ctype;
-	let user = &newbuf[1]: *[*]u8;
+	let user = &msg.control[prev + cmsg_align(size(sys::cmsghdr))]: *[*]u8;
 	return user[..length];
 };
 
@@ -112,7 +112,8 @@ export fn getcontrol(
 		if (next.hdr.cmsg_len >= length
 				&& next.hdr.cmsg_level == level
 				&& next.hdr.cmsg_type == ctype) {
-			return next.cmsg_data[..length];
+			const off = i + cmsg_align(size(sys::cmsghdr));
+			return cbuf[off..off + length];
 		};
 		i += next.hdr.cmsg_len;
 	};
