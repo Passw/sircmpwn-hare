@@ -2,6 +2,7 @@
 // (c) Hare authors <https://harelang.org>
 
 // Note: ast::ident should never have to be escaped
+use bufio;
 use encoding::utf8;
 use fmt;
 use hare::ast;
@@ -416,7 +417,9 @@ fn markup_html(
 	in: io::handle,
 	loc: lex::location,
 ) (void | error) = {
-	const doc = match (doc::parse(in, loc)) {
+	let sc = bufio::newscanner(in);
+	defer bufio::finish(&sc);
+	const doc = match (doc::parse(&sc, loc)) {
 	case let doc: doc::doc =>
 		yield doc;
 	case let err: lex::syntax =>

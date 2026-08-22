@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // (c) Hare authors <https://harelang.org>
 
+use bufio;
 use fmt;
 use hare::ast;
 use hare::lex;
@@ -105,7 +106,9 @@ still multiple lines
 	code sample starting immediately after list with one empty item`
 	));
 
-	const doc = parse(&in, lex::location { ... })!;
+	let sc = bufio::newscanner(&in);
+	defer bufio::finish(&sc);
+	const doc = parse(&sc, lex::location { ... })!;
 	defer freeall(doc);
 
 	assert_doc_eq(doc, [
@@ -166,8 +169,10 @@ continuing the same code sample
 	];
 	for (let i = 0u; i < len(tests): uint; i += 1) {
 		let in = memio::fixed(strings::toutf8(tests[i].0));
+		let sc = bufio::newscanner(&in);
+		defer bufio::finish(&sc);
 		fmt::errorln(tests[i].0)!;
-		const err = parse(&in, lex::location {
+		const err = parse(&sc, lex::location {
 			path = "<test>",
 			line = i + 1,
 			col = i + 1,

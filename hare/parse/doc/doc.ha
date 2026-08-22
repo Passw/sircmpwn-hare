@@ -32,15 +32,16 @@ export type decl_ref = ast::ident;
 // 	[[foo::bar::]]
 export type mod_ref = ast::ident;
 
-// Parses a haredoc document from an [[io::handle]]. 'start' is the location of
-// the top-left corner of the document, for accurate locations in error messages
-// (e.g. declaration documentation starts at col=3; READMEs start at col=1).
-export fn parse(in: io::handle, start: lex::location) (doc | lex::error) = {
-	let sc = bufio::newscanner(in);
-	defer bufio::finish(&sc);
-
+// Parses a haredoc document from a [[bufio::scanner]]. 'start' is the location
+// of the top-left corner of the document, for accurate locations in error
+// messages (e.g. declaration documentation starts at col=3; READMEs start at
+// col=1).
+export fn parse(
+	sc: *bufio::scanner,
+	start: lex::location,
+) (doc | lex::error) = {
 	let loc = lex::location { ... };
-	match (_parse(&sc, &loc)) {
+	match (_parse(sc, &loc)) {
 	case let doc: doc =>
 		return doc;
 	case let err: lex::syntax =>
