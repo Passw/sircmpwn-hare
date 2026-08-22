@@ -52,7 +52,7 @@ this module, because they're dependent on the value of FLT_EVAL_METHOD, which is
 unknown.
 
 Note that Hare's fixed-width integer types are NOT guaranteed to be
-ABI-compatible with C's bit-precise integer types.
+ABI-compatible with C's bit-precise integer types (_BitInt).
 
 When doing interop with C, be aware that Hare doesn't convert array parameters
 to pointers like C does; function prototypes will need to be adjusted
@@ -60,4 +60,4 @@ accordingly. There's one exception: valist is passed by reference on targets
 which define it as an array type in C (such as x86_64).
 
 Additional low-level or implementation-specific types may be defined in
-[[rt::]].
+[[rt::]] and [[arch::]].
