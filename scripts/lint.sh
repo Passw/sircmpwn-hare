@@ -2,7 +2,7 @@
 
 # XXX: technically doesn't work with paths that have newlines in them, but
 # find -exec doesn't propagate the exit status
-find . -name '*.ha' | while read -r f; do
+find . -name '*.ha' ! -path ./hare/parse/doc/+test.ha | while read -r f; do
 	awk 'BEGIN { state = "start" }
 		/./ { empty = 0 }
 		/^$/ { empty = 1 }

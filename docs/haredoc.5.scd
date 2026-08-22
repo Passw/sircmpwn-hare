@@ -17,9 +17,9 @@ References to other declarations and modules may be written in brackets, like
 this: [[os::stdout]]. References to modules should include a trailing :: in the
 identifier: [[os::exec::]].
 
-A bulleted list can be started by opening a line with "-", optionally preceded
-by a space. Each line opened like this begins a new list item. To complete the
-list, insert an empty line.
+A bulleted list can be started by opening a line with "-" followed by a space.
+The bullet may also be optionally preceded by a space. Each line opened like
+this begins a new list item. To complete the list, insert an empty line.
 
 Code samples may be used by starting a line with a single tab, optionally
 preceded by a space.

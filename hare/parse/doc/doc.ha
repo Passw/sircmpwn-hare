@@ -147,16 +147,18 @@ fn scan_code_sample(
 fn scan_list(
 	sc: *bufio::scanner,
 	loc: *lex::location,
-) (list | ...lex::error | utf8::invalid) = {
+) (list | paragraph | ...lex::error | utf8::invalid) = {
 	let li: list = [];
 	for (true) {
 		match (bufio::scan_rune(sc)?) {
 		case io::EOF =>
-			append(li, [])!;
+			bufio::unreadrune(sc, '-');
 			break;
 		case let r: rune =>
 			if (r != ' ') {
 				bufio::unreadrune(sc, r);
+				bufio::unreadrune(sc, '-');
+				break;
 			};
 		};
 
@@ -173,6 +175,9 @@ fn scan_list(
 		};
 	};
 
+	if (len(li) == 0) {
+		return scan_paragraph(sc, loc);
+	};
 	return li;
 };
 
@@ -220,11 +225,15 @@ fn scan_paragraph(
 			continue;
 		case '-' =>
 			if (state != state::NEWLINE || loc.col > 1) yield;
-			// XXX: we may want to reconsider if recognizing '-'
-			// here is too lenient (what if a line begins with a
-			// negative number?)
-			bufio::unreadrune(sc, r);
-			break;
+			match (bufio::scan_rune(sc)?) {
+			case io::EOF => void;
+			case let r: rune =>
+				bufio::unreadrune(sc, r);
+				if (r == ' ') {
+					bufio::unreadrune(sc, '-');
+					break;
+				};
+			};
 		case => void;
 		};
 

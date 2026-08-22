@@ -71,7 +71,7 @@ fn assert_paragraph_eq(a: paragraph, b: paragraph) void = {
 
 @test fn doc() void = {
 	// if you have some way in your editor to distinguish tabs from spaces
-	// you're gonna want to use it here
+	// and to see trailing spaces, you're gonna want to use that here
 	let in = memio::fixed(strings::toutf8(
 ` Blablabla asdfghjkl
  qwerty[[uiop::]] zxcvbnm
@@ -98,7 +98,10 @@ still multiple lines
  - list starting [[after]] [[empty::line::]]
 
  but with only [one item]]
+
  -
+ lone dash isn't a list item
+ - 
 	code sample starting immediately after list with one empty item`
 	));
 
@@ -117,8 +120,7 @@ still multiple lines
 		[
 			["list starting immediately after paragraph"],
 			["another list item"],
-			["yet another but this one spans multiple lines"],
-			["no leading space still multiple lines"],
+			["yet another but this one spans multiple lines -no leading space still multiple lines"],
 		]: list,
 
 		`code sample
@@ -145,6 +147,8 @@ continuing the same code sample
 		]: list,
 
 		["but with only [one item]]"]: paragraph,
+
+		["- lone dash isn't a list item"]: paragraph,
 
 		[[]]: list,
 
