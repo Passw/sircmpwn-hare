@@ -36,7 +36,7 @@ the module using the module's name (the last item in its identifier), a colon, a
 space, and a summary, as follows:
 
 ```
-memio: memory-backed I/O functions
+memio: memory-backed I/O primitives
 ```
 
 This may be followed by an empty line, then a long-form summary of the module
