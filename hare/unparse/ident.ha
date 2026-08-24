@@ -4,14 +4,11 @@
 use hare::ast;
 use io;
 use memio;
+use strings;
 
 // Unparses an identifier.
 export fn ident(out: io::handle, id: ast::ident) (size | io::error) = {
-	let ctx = context {
-		out = out,
-		...
-	};
-	return _ident(&ctx, &syn_nowrap, id, synkind::IDENT);
+	return memio::join(out, "::", id...);
 };
 
 fn _ident(
@@ -31,10 +28,16 @@ fn _ident(
 };
 
 // Unparses an identifier into a string. The caller must free the return value.
-export fn identstr(id: ast::ident) str = {
-	let buf = memio::dynamic();
-	ident(&buf, id)!;
-	return memio::string(&buf)!;
+export fn identstr(id: ast::ident) str = strings::join("::", id...)!;
+
+@test fn identstr() void = {
+	let s = identstr(["foo", "bar", "baz"]);
+	defer free(s);
+	assert(s == "foo::bar::baz");
+
+	let s = identstr(["foo"]);
+	defer free(s);
+	assert(s == "foo");
 };
 
 // Unparses an identifier into a string, using the supplied buffer for storage
@@ -53,12 +56,12 @@ export fn identstr_buf(id: ast::ident, buf: []u8) (str | nomem) = {
 	};
 };
 
-@test fn ident() void = {
-	let s = identstr(["foo", "bar", "baz"]);
-	defer free(s);
+@test fn identstr_buf() void = {
+	let buf: [ast::IDENT_MAX / 2 + 1]u8 = [0...];
+
+	let s = identstr_buf(["foo", "bar", "baz"], buf)!;
 	assert(s == "foo::bar::baz");
 
-	let s = identstr(["foo"]);
-	defer free(s);
+	let s = identstr_buf(["foo"], buf)!;
 	assert(s == "foo");
 };
