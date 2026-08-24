@@ -37,6 +37,22 @@ export fn identstr(id: ast::ident) str = {
 	return memio::string(&buf)!;
 };
 
+// Unparses an identifier into a string, using the supplied buffer for storage
+// (overwriting any existing contents). nomem is returned if the buffer's
+// capacity is too small to fit the unparsed string.
+//
+// A buffer with a capacity of at least [[ast::IDENT_MAX]] / 2 + 1 is guaranteed
+// to be large enough to unparse any identifier parsed by [[hare::parse::]].
+export fn identstr_buf(id: ast::ident, buf: []u8) (str | nomem) = {
+	let strm = memio::fixed(buf);
+	match (ident(&strm, id)) {
+	case size =>
+		return memio::string(&strm)!;
+	case io::error =>
+		return nomem;
+	};
+};
+
 @test fn ident() void = {
 	let s = identstr(["foo", "bar", "baz"]);
 	defer free(s);
