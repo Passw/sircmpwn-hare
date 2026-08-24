@@ -6,7 +6,20 @@ use bytes;
 // Returns a new string duplicated from 's', but with all instances of 'needle'
 // replaced with 'target'. The caller must free the return value.
 export fn replace(s: str, needle: str, target: str) (str | nomem) = {
-	return multireplace(s, (needle, target));
+	return _multireplace(s, void, (needle, target));
+};
+
+// Returns a new string duplicated from 's', but with all instances of 'needle'
+// replaced with 'target'. The result is stored in the supplied buffer
+// (overwriting any existing contents), which must not overlap 's'. nomem is
+// returned if the buffer's capacity is too small.
+export fn replace_buf(
+	s: str,
+	buf: []u8,
+	needle: str,
+	target: str,
+) (str | nomem) = {
+	return _multireplace(s, buf, (needle, target));
 };
 
 // Performs a replacement in 's' of each tuple given by 'repls'. Replacement
@@ -19,18 +32,48 @@ export fn replace(s: str, needle: str, target: str) (str | nomem) = {
 //
 // The caller must free the return value.
 export fn multireplace(s: str, repls: (str, str)...) (str | nomem) = {
+	return _multireplace(s, void, repls...);
+};
+
+// Performs a replacement in 's' of each tuple given by 'repls', in the same
+// manner as [[multireplace]], except the result is stored in the supplied
+// buffer (overwriting any existing contents), which must not overlap 's'. nomem
+// is returned if the buffer's capacity is too small.
+export fn multireplace_buf(
+	s: str,
+	buf: []u8,
+	repls: (str, str)...
+) (str | nomem) = {
+	return _multireplace(s, buf, repls...);
+};
+
+fn _multireplace(
+	s: str,
+	buf: ([]u8 | void),
+	repls: (str, str)...
+) (str | nomem) = {
 	let b = toutf8(s);
-	let res: []u8 = [];
+	let (res, is_static) = match (buf) {
+	case let buf: []u8 =>
+		yield (buf[..0], true);
+	case void =>
+		yield ([]: []u8, false);
+	};
 	let ok = false;
-	defer if (!ok) free(res);
-	let i = 0z;
+	defer if (!ok && !is_static) free(res);
+
 	let prev = 0z; // end of previous match, so we can append in chunks
-	for :step (i < len(b)) {
+	for :step (let i = 0z; i < len(b)) {
 		for (let (replace, with) .. repls) {
 			const replb = (toutf8(replace), toutf8(with));
 			if (bytes::hasprefix(b[i..], replb.0)) {
-				append(res, b[prev..i]...)?;
-				append(res, replb.1...)?;
+				if (is_static) {
+					static append(res, b[prev..i]...)?;
+					static append(res, replb.1...)?;
+				} else {
+					append(res, b[prev..i]...)?;
+					append(res, replb.1...)?;
+				};
 				i += len(replb.0);
 				prev = i;
 				continue :step;
@@ -38,7 +81,12 @@ export fn multireplace(s: str, repls: (str, str)...) (str | nomem) = {
 		};
 		i += 1;
 	};
-	append(res, b[prev..i]...)?;
+	if (is_static) {
+		static append(res, b[prev..]...)?;
+	} else {
+		append(res, b[prev..]...)?;
+	};
+
 	ok = true;
 	return fromutf8_unsafe(res);
 };
@@ -63,6 +111,9 @@ export fn multireplace(s: str, repls: (str, str)...) (str | nomem) = {
 	const s = replace("こんにちは", "にち", "ばん")!;
 	defer free(s);
 	assert(s == "こんばんは");
+
+	let buf: [3]u8 = [0...];
+	assert(replace_buf("abc", buf, "a", "ab") is nomem);
 };
 
 @test fn multireplace() void = {
@@ -83,4 +134,7 @@ export fn multireplace(s: str, repls: (str, str)...) (str | nomem) = {
 	const s = multireplace("hello there", ("ell", "eww"), ("e", "a"))!;
 	defer free(s);
 	assert(s == "hewwo thara");
+
+	let buf: [3]u8 = [0...];
+	assert(multireplace_buf("abc", buf, ("a", "b"), ("c", "cd")) is nomem);
 };
