@@ -1,24 +1,14 @@
 // SPDX-License-Identifier: MPL-2.0
 // (c) Hare authors <https://harelang.org>
 
-use encoding::utf8;
 use strings;
 
 // Converts a symbol name to a Hare identifier. The return value is statically
 // allocated.
 export fn symname_to_ident(name: str) const str = {
+	// the actual limit for the length of a hare identifier is much lower
+	// than this (382, to be exact), but we want to accomodate for all
+	// possible symbols, hence why the buffer's capacity is MAX_SYMNAME * 2
 	static let buf: [MAX_SYMNAME * 2]u8 = [0...];
-	let slice = buf[..0];
-
-	const iter = strings::iter(name);
-	for (const rn => strings::next(&iter)) {
-		if (rn == '.') {
-			static append(slice, ':')!;
-			static append(slice, ':')!;
-		} else {
-			static append(slice, utf8::encoderune(rn)...)!;
-		};
-	};
-
-	return strings::fromutf8(slice)!;
+	return strings::replace_buf(name, buf, ".", "::")!;
 };
