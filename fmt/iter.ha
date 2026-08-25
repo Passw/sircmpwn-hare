@@ -2,6 +2,7 @@
 // (c) Hare authors <https://harelang.org>
 
 use ascii;
+use math::complex;
 use strings;
 use strconv;
 use types;
@@ -11,8 +12,8 @@ use types;
 export type field = (...formattable | *mods);
 
 // Tagged union of all types which are formattable.
-export type formattable = (...types::numeric | uintptr | str | rune | bool |
-	nullable *opaque | void);
+export type formattable = (...types::numeric | uintptr | ...complex::complex |
+	str | rune | bool | nullable *opaque | void);
 
 // Negative modifier. Specifies for numerical arguments when to prepend a plus
 // or minus sign or a blank space.

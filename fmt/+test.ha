@@ -81,4 +81,19 @@ use strconv;
 
 	assert(bsprintf(buf, "{} {} {} {} {}", true, false, null, 'x', void)!
 		== "true false (null) x void");
+
+	assert(bsprint(buf, (0f32, 67f32))! == "67i");
+	assert(bsprint(buf, (0f64, 67f64))! == "67i");
+	assert(bsprint(buf, (0f32, -67f32))! == "-67i");
+	assert(bsprint(buf, (0f64, -67f64))! == "-67i");
+	assert(bsprint(buf, (-0f32, 67f32))! == "-0+67i");
+	assert(bsprint(buf, (-0f64, 67f64))! == "-0+67i");
+	assert(bsprint(buf, (67f32, 42f32))! == "67+42i");
+	assert(bsprint(buf, (67f64, 42f64))! == "67+42i");
+	assert(bsprint(buf, (-67f32, -42f32))! == "-67-42i");
+	assert(bsprint(buf, (-67f64, -42f64))! == "-67-42i");
+	assert(bsprint(buf, (math::INF, math::NAN))! == "infinity+nan*i");
+	assert(bsprint(buf, (math::INF, -math::NAN))! == "infinity+nan*i");
+	assert(bsprint(buf, (math::NAN, -math::INF))! == "nan-infinity*i");
+	assert(bsprint(buf, (-math::NAN, -math::INF))! == "nan-infinity*i");
 };

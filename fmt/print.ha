@@ -4,6 +4,7 @@
 use encoding::utf8;
 use io;
 use math;
+use math::complex;
 use strconv;
 use strings;
 use types;
@@ -103,12 +104,32 @@ case let v: nullable *opaque =>
 		return io::write(out, strings::toutf8("(null)"));
 	};
 case let f: types::floating =>
-	assert(mod.base == strconv::base::DEFAULT
-		|| mod.base == strconv::base::DEC); // TODO
-	assert(mod.prec <= types::UINT_MAX);
-	// TODO: mod.prec should be (size | void) but that needs @default
-	return strconv::fftosf(out, f, mod.ffmt,
-		if (mod.prec != 0) mod.prec: uint else void, mod.fflags)?;
+	return format_float(out, f, mod);
+case let z: complex::complex =>
+	const (re, im): (f64, f64) = match (z) {
+	case let z: complex::c64 =>
+		yield (z.0: f64, z.1: f64);
+	case let z: complex::c128 =>
+		yield z;
+	};
+
+	let z = 0z;
+	const re_zero = re == 0.0 && math::signf64(re) > 0;
+	if (!re_zero) {
+		z += format_float(out, re, mod)?;
+	};
+	const im_sign = math::signf64(im) < 0 && !math::isnan(im);
+	if (im_sign || !re_zero) {
+		z += io::write(out, [if (im_sign) '-' else '+'])?;
+	};
+	z += format_float(out, math::absf64(im), mod)?;
+	if (math::isinf(im) || math::isnan(im)) {
+		z += io::write(out, ['*', 'i'])?;
+	} else {
+		z += io::write(out, ['i'])?;
+	};
+
+	return z;
 case let i: types::integer =>
 	let neg = false;
 	let i: u64 = match (i) {
@@ -155,4 +176,17 @@ case let i: types::integer =>
 	};
 	z += pad;
 	return z + io::write(out, strings::toutf8(i))?;
+};
+
+fn format_float(
+	out: io::handle,
+	f: types::floating,
+	mod: *mods,
+) (size | io::error) = {
+	assert(mod.base == strconv::base::DEFAULT
+		|| mod.base == strconv::base::DEC); // TODO
+	assert(mod.prec <= types::UINT_MAX);
+	// TODO: mod.prec should be (size | void) but that needs @default
+	return strconv::fftosf(out, f, mod.ffmt,
+		if (mod.prec != 0) mod.prec: uint else void, mod.fflags)?;
 };
