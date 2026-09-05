@@ -15,41 +15,44 @@ type testcase = struct {
 
 // https://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/Component-Testing
 
-@test fn nist_p256() void = run(p256cases[..1], &p256());
-@test fn nist_p384() void = run(p384cases[..1], &p384());
-@test fn nist_p521() void = run(p521cases[..1], &p521());
+@test fn nist_p256() void
+	= run(p256cases[..1], &p256(), P256_SHAREDSZ, P256_PUBKEYSZ);
+@test fn nist_p384() void
+	= run(p384cases[..1], &p384(), P384_SHAREDSZ, P384_PUBKEYSZ);
+@test fn nist_p521() void
+	= run(p521cases[..1], &p521(), P521_SHAREDSZ, P521_PUBKEYSZ);
 
 @test fn nist_p256_full() void = {
 	test::require("slow");
-	run(p256cases[1..], &p256());
+	run(p256cases[1..], &p256(), P256_SHAREDSZ, P256_PUBKEYSZ);
 };
 
 @test fn nist_p384_full() void = {
 	test::require("slow");
-	run(p384cases[1..], &p384());
+	run(p384cases[1..], &p384(), P384_SHAREDSZ, P384_PUBKEYSZ);
 };
 
 @test fn nist_p521_full() void = {
 	test::require("slow");
-	run(p521cases[1..], &p521());
+	run(p521cases[1..], &p521(), P521_SHAREDSZ, P521_PUBKEYSZ);
 };
 
 
-fn run(cases: []testcase, priv: *privkey) void = {
+fn run(cases: []testcase, priv: *privkey, sharedsz: size, pubsz: size) void = {
 	let pubbuf: [ec::MAX_POINTSZ]u8 = [0...];
-	let pub = pubbuf[..priv.curve.pointsz];
+	let pub = pubbuf[..pubsz];
 
 	let sharedbuf: [ec::MAX_POINTSZ / 2]u8 = [0...];
-	let shared = sharedbuf[..priv.curve.pointsz / 2];
+	let shared = sharedbuf[..sharedsz];
 
 	for (let i = 0z; i < len(cases); i += 1) {
 		const c = cases[i];
 		priv.get_x(priv)[..] = c.priv;
 
-		pubkey(pub, priv);
+		assert(pubkey(pub, priv) == pubsz);
 		assert(bytes::equal(pub, c.pub));
 
-		derive(shared, priv, c.otherpub)!;
+		assert(derive(shared, priv, c.otherpub)! == sharedsz);
 		assert(bytes::equal(shared, c.shared));
 	};
 };

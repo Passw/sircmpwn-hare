@@ -7,13 +7,22 @@ use io;
 
 
 // Size of the shared secret in bytes when using p256 curves.
-export def P256_SHAREDSZ = ec::P256_POINTSZ / 2;
+export def P256_SHAREDSZ = ec::P256_SCALARSZ;
+
+// Size of a p256 public key in bytes.
+export def P256_PUBKEYSZ = ec::P256_POINTSZ;
 
 // Size of the shared secret in bytes when using p384 curves.
-export def P384_SHAREDSZ = ec::P384_POINTSZ / 2;
+export def P384_SHAREDSZ = ec::P384_SCALARSZ;
+
+// Size of a p384 public key in bytes.
+export def P384_PUBKEYSZ = ec::P384_POINTSZ;
 
 // Size of the shared secret in bytes when using p521 curves.
-export def P521_SHAREDSZ = ec::P521_POINTSZ / 2;
+export def P521_SHAREDSZ = ec::P521_SCALARSZ;
+
+// Size of a p521 public key in bytes.
+export def P521_PUBKEYSZ = ec::P521_POINTSZ;
 
 // Key is either not of expected size or is not a valid point on given curve.
 export type invalidkey = !void;
