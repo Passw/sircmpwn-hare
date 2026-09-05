@@ -99,6 +99,7 @@ export fn derive(
 
 	let buf: [ec::MAX_POINTSZ]u8 = [0...];
 	let buf = buf[..len(pub)];
+	defer bytes::zero(buf);
 	buf[..] = pub[..];
 
 	if (priv.curve.mul(buf, priv.get_x(priv)) == 0) {
@@ -107,6 +108,5 @@ export fn derive(
 
 	const csz = priv.curve.pointsz / 2;
 	shared[..] = buf[1..csz + 1];
-	bytes::zero(buf);
 	return csz;
 };
