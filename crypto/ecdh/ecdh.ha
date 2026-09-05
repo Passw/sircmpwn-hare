@@ -83,10 +83,15 @@ export fn p521() p521key = p521key {
 
 // Generates a key seeding from the 'rand' stream and stores it in 'priv'.
 // 'rand' must be a cryptographic random generator like
-// [[crypto::random::stream]].
+// [[crypto::random::stream]]. Make sure to call [[privkey_finish]] when done
+// to erase any secret data from memory.
 export fn newkey(priv: *privkey, rand: io::handle) (void | io::error) = {
 	ec::keygen(priv.curve, priv.get_x(priv), rand)?;
 };
+
+// Erases key parameters from memory.
+export fn privkey_finish(priv: *privkey) void
+	= bytes::zero(priv.get_x(priv));
 
 // Derives the public key from given 'priv' and stores it into 'pub'. Returns
 // the number of key bytes written to 'pub'.
