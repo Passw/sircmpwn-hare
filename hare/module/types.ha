@@ -16,6 +16,9 @@ use wordexp;
 // A module was not found.
 export type not_found = !void;
 
+// A pkg-config dependency was not found.
+export type pkg_not_found = !void;
+
 // A tag contains a dot.
 export type tag_has_dot = !void;
 
@@ -46,6 +49,7 @@ export type error = !(
 	utf8::invalid |
 	file_conflict |
 	not_found |
+	pkg_not_found |
 	dep_cycle |
 	dep_missing |
 	tag_has_dot |
@@ -137,6 +141,8 @@ fn _strerror(e: error, buf: *memio::stream) void = {
 		yield "Tag contains a '.'";
 	case tag_bad_format =>
 		yield "Bad tag format";
+	case pkg_not_found =>
+		yield "pkg-config dependency not found";
 	case let e: dep_cycle =>
 		memio::concat(buf, "Dependency cycle: ")!;
 		memio::join(buf, " -> ", e...)!;

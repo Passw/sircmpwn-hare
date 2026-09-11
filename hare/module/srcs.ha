@@ -130,7 +130,6 @@ fn path_find(ctx: *context, buf: *path::buffer) (srcset | error) = {
 			yield conf;
 		case let err: (ini::error | wordexp::error) =>
 			return err;
-		case nomem => abort();
 		};
 	case errors::noentry =>
 		path::pop(buf);

@@ -4,7 +4,9 @@
 use format::ini;
 use io;
 use os;
+use os::exec;
 use path;
+use shlex;
 use strings;
 use wordexp;
 
@@ -19,7 +21,7 @@ export type config = struct {
 export fn load_config(
 	buf: *path::buffer,
 	in: io::handle,
-) (config | ini::error | wordexp::error | nomem) = {
+) (config | error) = {
 	const sc = ini::scan(in);
 	let conf = config { ... };
 
@@ -27,9 +29,24 @@ export fn load_config(
 	defer os::chdir(cwd)!;
 	os::chdir(path::string(buf))!;
 
-	for (const (sec, key, val) => ini::next(&sc)?) {
-		const val = wordexp::wordexp(val,
-			wordexp::flag::SHOWERR | wordexp::flag::UNDEF)?;
+	for (true) {
+		const (sec, key, val) = match (ini::next(&sc)) {
+		case let ent: ini::entry =>
+			yield ent;
+		case let err: ini::error =>
+			return err;
+		case io::EOF => break;
+		case nomem => abort();
+		};
+
+		const val = match (wordexp::wordexp(val,
+			wordexp::flag::SHOWERR | wordexp::flag::UNDEF)) {
+		case let val: []str =>
+			yield val;
+		case let err: wordexp::error =>
+			return err;
+		case nomem => abort();
+		};
 		if (sec == "") {
 			load_conf_toplevel(&conf, key, val)?;
 		};
@@ -37,12 +54,38 @@ export fn load_config(
 	return conf;
 };
 
-fn load_conf_toplevel(conf: *config, key: str, val: []str) (void | nomem) = {
+fn load_conf_toplevel(conf: *config, key: str, val: []str) (void | error) = {
 	switch (key) {
 	case "sources" =>
-		append(conf.srcs, val...)?;
+		append(conf.srcs, val...)!;
 	case "libs" =>
-		append(conf.libs, val...)?;
+		append(conf.libs, val...)!;
+	case "dependencies" =>
+		insert(val[0], "--libs-only-l")!;
+		insert(val[0], "--libs-only-L")!;
+		const cmd = match (exec::cmd("pkg-config", val...)) {
+		case let cmd: exec::command =>
+			yield cmd;
+		case let err: exec::error =>
+			return pkg_not_found;
+		};
+
+		const (rd, wr) = exec::pipe();
+		exec::addfile(&cmd, os::stdout_file, wr)!;
+		const proc = exec::start(&cmd)!;
+		io::close(wr)!;
+
+		const data = io::drain(rd)!;
+		io::close(rd)!;
+		const st = exec::wait(&proc)!;
+		match (exec::check(&st)) {
+		case void => void;
+		case =>
+			return pkg_not_found;
+		};
+
+		const in = strings::fromutf8(data)!;
+		append(conf.libs, shlex::split(in)!...)!;
 	case =>
 		void;
 	};
