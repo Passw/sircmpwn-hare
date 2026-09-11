@@ -640,7 +640,7 @@ export fn st_type(i: u8) stt = (i & 0xF): stt;
 // Converts symbol bindings and type into [sym64.st_info].
 //
 // Equivalent to the ELF64_ST_INFO macro.
-export fn st_info(b: stb, t: stt) u8 = b: u8 << 4 + t: u8 & 0xF;
+export fn st_info(b: stb, t: stt) u8 = (b: u8 << 4) + (t: u8 & 0xF);
 
 // Relocation entry
 export type rel64 = struct {
