@@ -6,11 +6,14 @@ use fs;
 use hare::ast;
 use hare::module;
 use io;
+use os;
 use os::exec;
 use path;
 use time;
 
-export type error = !(exec::error | fs::error | io::error | module::error | path::error);
+export type invalid_link_flag = !str;
+
+export type error = !(exec::error | fs::error | io::error | module::error | path::error | invalid_link_flag);
 
 export type unknown_platform = !str;
 
@@ -92,6 +95,17 @@ export type context = struct {
 
 	mods: []module::module,
 	hashes: [][NSTAGES]([sha256::SZ]u8 | void),
+};
+
+// Enables libc, returning the previous value of the libc configuration.
+export fn enable_libc(ctx: *context) bool = {
+	const orig = ctx.libc;
+	if (!ctx.freestanding || ctx.platform.need_libc) {
+		ctx.libc = true;
+		module::merge_tags(&ctx.ctx.tags, "+libc")!;
+		ctx.cmds[stage::BIN] = os::tryenv("CC", ctx.arch.cc_cmd);
+	};
+	return orig;
 };
 
 export fn ctx_finish(ctx: *context) void = {

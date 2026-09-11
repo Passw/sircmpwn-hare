@@ -40,7 +40,7 @@ fn deps(name: str, cmd: *getopt::command) (void | error) = {
 		case 'd' =>
 			goal = deps_fmt::DOT;
 		case 'T' =>
-			merge_tags(&tags, opt.1)?;
+			module::merge_tags(&tags, opt.1)?;
 		case 's' =>
 			submodules = true;
 		case 't' =>

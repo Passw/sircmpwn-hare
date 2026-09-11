@@ -7,29 +7,6 @@ use hare::module;
 use os;
 use strings;
 
-fn merge_tags(current: *[]str, new: str) (void | module::error) = {
-	let trimmed = strings::trimprefix(new, "^");
-	if (trimmed != new) {
-		free(*current);
-		*current = [];
-	};
-	let newtags = module::parse_tags(trimmed)?;
-	defer free(newtags);
-	for :new (let newtag .. newtags) {
-		for (let j = 0z; j < len(current); j += 1) {
-			if (newtag.name == current[j]) {
-				if (!newtag.include) {
-					static delete(current[j]);
-				};
-				continue :new;
-			};
-		};
-		if (newtag.include) {
-			append(current, newtag.name)!;
-		};
-	};
-};
-
 fn harepath() str = os::tryenv("HAREPATH", HAREPATH);
 
 fn harecache() str = {

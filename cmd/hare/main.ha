@@ -132,6 +132,8 @@ export fn main() void = {
 			fmt::fatalf("Error: Unknown arch: {}", e);
 		case let e: build::unknown_platform =>
 			fmt::fatalf("Error: Unknown platform: {}", e);
+		case let e: build::invalid_link_flag =>
+			fmt::fatalf("Error: {}: invalid linker flags", e);
 		case unknown_output =>
 			fmt::fatal("Error: Can't guess output in root directory");
 		case let e: unknown_type =>

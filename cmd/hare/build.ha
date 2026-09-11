@@ -49,7 +49,7 @@ fn build(name: str, cmd: *getopt::command) (void | error) = {
 	if (name == "test") {
 		ctx.test = true;
 		ctx.submods = len(cmd.args) == 0;
-		merge_tags(&ctx.ctx.tags, "+test")?;
+		module::merge_tags(&ctx.ctx.tags, "+test")?;
 	};
 
 	if (!tty::isatty(os::stderr_file)) {
@@ -102,7 +102,7 @@ fn build(name: str, cmd: *getopt::command) (void | error) = {
 		case 'R' =>
 			ctx.release = true;
 		case 'T' =>
-			merge_tags(&ctx.ctx.tags, opt.1)?;
+			module::merge_tags(&ctx.ctx.tags, opt.1)?;
 		case 't' =>
 			switch (opt.1) {
 			case "td" =>
@@ -146,11 +146,14 @@ fn build(name: str, cmd: *getopt::command) (void | error) = {
 		os::tryenv("AS", arch.as_cmd),
 		os::tryenv("LD", arch.ld_cmd),
 	];
-	if (!ctx.freestanding && (len(ctx.libs) > 0 || ctx.platform.need_libc)) {
-		ctx.libc = true;
-		merge_tags(&ctx.ctx.tags, "+libc")?;
-		ctx.cmds[build::stage::BIN] = os::tryenv("CC", arch.cc_cmd);
+	if (len(ctx.libs) > 0) {
+		build::enable_libc(&ctx);
 	};
+
+	const input = if (len(cmd.args) == 0) os::getcwd() else cmd.args[0];
+
+	ctx.mods = build::gather(&ctx, os::realpath(input)?)?;
+	append(ctx.hashes, [[void...]...], len(ctx.mods))!;
 
 	for (let i = 1z; i < len(ctx.cmds); i += 1) {
 		const cmd_path = match (exec::lookup(ctx.cmds[i])) {
@@ -169,11 +172,6 @@ fn build(name: str, cmd: *getopt::command) (void | error) = {
 		};
 		ctx.cmd_mtimes[i] = stat.mtime;
 	};
-
-	const input = if (len(cmd.args) == 0) os::getcwd() else cmd.args[0];
-
-	ctx.mods = build::gather(&ctx, os::realpath(input)?)?;
-	append(ctx.hashes, [[void...]...], len(ctx.mods))!;
 
 	let built = build::execute(&ctx)?;
 	defer free(built);

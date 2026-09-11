@@ -25,6 +25,7 @@ type error = !(
 	output_failed |
 	invalid_namespace |
 	build::unknown_platform |
+	build::invalid_link_flag |
 );
 
 type unknown_arch = !str;

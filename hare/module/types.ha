@@ -156,3 +156,27 @@ fn _strerror(e: error, buf: *memio::stream) void = {
 	};
 	memio::concat(buf, s)!;
 };
+
+// Merge a new tag into a set of tags.
+export fn merge_tags(current: *[]str, new: str) (void | error) = {
+	let trimmed = strings::trimprefix(new, "^");
+	if (trimmed != new) {
+		free(*current);
+		*current = [];
+	};
+	let newtags = parse_tags(trimmed)?;
+	defer free(newtags);
+	for :new (let newtag .. newtags) {
+		for (let j = 0z; j < len(current); j += 1) {
+			if (newtag.name == current[j]) {
+				if (!newtag.include) {
+					static delete(current[j]);
+				};
+				continue :new;
+			};
+		};
+		if (newtag.include) {
+			append(current, newtag.name)!;
+		};
+	};
+};

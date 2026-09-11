@@ -11,6 +11,7 @@ use wordexp;
 // A hare module configuration, i.e. hare.ini.
 export type config = struct {
 	srcs: []str,
+	libs: []str,
 };
 
 // Loads a module configuration from a hare.ini file. Free the return value with
@@ -40,6 +41,8 @@ fn load_conf_toplevel(conf: *config, key: str, val: []str) (void | nomem) = {
 	switch (key) {
 	case "sources" =>
 		append(conf.srcs, val...)?;
+	case "libs" =>
+		append(conf.libs, val...)?;
 	case =>
 		void;
 	};
