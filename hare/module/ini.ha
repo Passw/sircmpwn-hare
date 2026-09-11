@@ -1,8 +1,14 @@
 // SPDX-License-Identifier: MPL-2.0
 // (c) Hare authors <https://harelang.org>
 
+use bufio;
+use fmt;
 use format::ini;
+use hare::ast;
+use hare::lex;
+use hare::parse;
 use io;
+use memio;
 use os;
 use os::exec;
 use path;
@@ -14,6 +20,7 @@ use wordexp;
 export type config = struct {
 	srcs: []str,
 	libs: []str,
+	defs: []ast::decl_const,
 };
 
 // Loads a module configuration from a hare.ini file. Free the return value with
@@ -39,28 +46,41 @@ export fn load_config(
 		case nomem => abort();
 		};
 
-		const val = match (wordexp::wordexp(val,
-			wordexp::flag::SHOWERR | wordexp::flag::UNDEF)) {
-		case let val: []str =>
-			yield val;
-		case let err: wordexp::error =>
-			return err;
-		case nomem => abort();
-		};
 		if (sec == "") {
-			load_conf_toplevel(&conf, key, val)?;
+			load_conf_section(&conf, buf, key, val)?;
 		};
 	};
 	return conf;
 };
 
-fn load_conf_toplevel(conf: *config, key: str, val: []str) (void | error) = {
+fn load_conf_section(
+	conf: *config,
+	buf: *path::buffer,
+	key: str,
+	val: str,
+) (void | error) = {
+	const key = strings::trim(key);
+	if (strings::contains(key, ":")) {
+		const path = path::string(buf);
+		const define = fmt::asprintf("{}={}", key, val)!;
+		defer free(define);
+
+		const buf = memio::fixed(strings::toutf8(define));
+		const sc = bufio::newscanner(&buf, len(define));
+		defer bufio::finish(&sc);
+		const lexer = lex::init(&sc, path);
+		defer lex::finish(&lexer);
+		append(conf.defs, parse::define(&lexer)?)!;
+		return;
+	};
+
 	switch (key) {
 	case "sources" =>
-		append(conf.srcs, val...)!;
+		append(conf.srcs, wordexp(val)?...)!;
 	case "libs" =>
-		append(conf.libs, val...)!;
+		append(conf.libs, wordexp(val)?...)!;
 	case "dependencies" =>
+		const val = wordexp(val)?;
 		insert(val[0], "--libs-only-l")!;
 		insert(val[0], "--libs-only-L")!;
 		const cmd = match (exec::cmd("pkg-config", val...)) {
@@ -86,12 +106,22 @@ fn load_conf_toplevel(conf: *config, key: str, val: []str) (void | error) = {
 
 		const in = strings::fromutf8(data)!;
 		append(conf.libs, shlex::split(in)!...)!;
-	case =>
-		void;
+	case => void;
 	};
 };
 
 // Frees resources associated with a [[config]].
 export fn config_finish(conf: *config) void = {
 	strings::freeall(conf.srcs);
+};
+
+fn wordexp(val: str) ([]str | error) = {
+	def WE_FLAGS = wordexp::flag::SHOWERR | wordexp::flag::UNDEF;
+	match (wordexp::wordexp(val, WE_FLAGS)) {
+	case let vals: []str =>
+		return vals;
+	case let err: wordexp::error =>
+		return err;
+	case nomem => abort();
+	};
 };

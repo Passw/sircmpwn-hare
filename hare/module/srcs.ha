@@ -131,7 +131,7 @@ fn path_find(ctx: *context, buf: *path::buffer) (srcset | error) = {
 		case let err: (ini::error | wordexp::error) =>
 			return err;
 		};
-	case errors::noentry =>
+	case (errors::noentry | fs::wrongtype) =>
 		path::pop(buf);
 	case let err: fs::error =>
 		return err;

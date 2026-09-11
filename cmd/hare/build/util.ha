@@ -149,14 +149,21 @@ fn get_flags(ctx: *context, t: *task) ([]str | error) = {
 		append(flags, strings::dup("-T")!)!;
 	};
 
-	for (let define .. ctx.defines) {
+	const defines = alloc(ctx.defines...)!;
+	append(defines, mod.conf.defs...)!;
+	defer free(defines);
+
+	for (let define .. defines) {
 		let ident = define.ident;
 		let ns = ident[..len(ident) - 1];
 		if (!ast::ident_eq(ns, mod.ns)) {
 			continue;
 		};
+		const istr = unparse::identstr(ident);
+		defer free(istr);
+
 		let buf = memio::dynamic();
-		memio::concat(&buf, "-D", ident[len(ident) - 1])!;
+		memio::concat(&buf, "-D", istr)!;
 		match (define._type) {
 		case null => void;
 		case let t: *ast::_type =>

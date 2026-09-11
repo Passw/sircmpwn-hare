@@ -42,7 +42,8 @@ export fn gather(ctx: *context, input: str) ([]module::module | error) = {
 		yield len(mods) - 1;
 	};
 
-	// Enable libc if we picked up any libraries via hare.ini
+	// Enable libc if we picked up any libraries via hare.ini and restart
+	// gather if needed
 	const have_libc = ctx.libc;
 	for (let mod .. mods) {
 		if (len(mod.conf.libs) == 0) {
