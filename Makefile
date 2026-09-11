@@ -87,7 +87,8 @@ docs: \
 	docs/hare-tool.1 \
 	docs/hare-version.1 \
 	docs/haredoc.5 \
-	docs/hare-module.5
+	docs/hare-module.5 \
+	docs/hare.ini.5
 
 MAN1 = hare hare-build hare-cache hare-deps haredoc hare-run hare-test hare-tool hare-version
 MAN5 = haredoc hare-module

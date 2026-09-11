@@ -8,9 +8,16 @@ hare-module - Hare module layout
 
 Hare modules are represented as directories in the filesystem. A directory is a
 valid Hare module if it contains at least one Hare source file (with the file
-extension *.ha*), or if it contains a file named *README*.
+extension *.ha*), a *hare.ini* file, or a file named *README*.
 
-All files which end in *.ha*, *.s*, and *.o* are treated as inputs to the
+In either case, the path to the module is related to its namespace, such that
+_foo::bar_ is located at _foo/bar/_. See *DEPENDENCY RESOLUTION* for details on
+path resolution.
+
+# AUTOMATIC MODULES
+
+Modules which do not have a *hare.ini* file are _automatic_ modules. In this
+case, all files which end in *.ha*, *.s*, and *.o* are treated as inputs to the
 module, and are respectively treated as Hare sources, assembly sources, and
 objects to be linked into the final binary.
 
@@ -50,6 +57,14 @@ submodule, and as such must be imported separately. For example, "foo::bar"
 refers to foo/bar/. If a directory name contains both a name and a tagset, the
 build driver will error out.
 
+# DECLARED MODULES
+
+A *hare.ini* file is used to configure a _declared module_. In this case, the
+list of source files may be enumerated explicitly, may be organized into an
+arbitrary directory layout, and other build parameters may be configured.
+
+See *hare.ini*(5) for details on declared modules.
+
 # DEPENDENCY RESOLUTION
 
 The "use" directives in each Hare source file used as an input to
@@ -84,4 +99,4 @@ tags, use *-T^*.
 
 # SEE ALSO
 
-*hare*(1), *hare-build*(1), *hare-run*(1), *hare-test*(1)
+*hare*(1), *hare-build*(1), *hare-run*(1), *hare-test*(1), *hare.ini*(5)
