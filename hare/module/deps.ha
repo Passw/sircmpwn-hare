@@ -20,6 +20,7 @@ export type module = struct {
 	name: str,
 	ns: ast::ident,
 	path: str,
+	conf: config,
 	srcs: srcset,
 	// [](index to the module, module's identifier)
 	deps: [](size, ast::ident),
@@ -286,6 +287,7 @@ fn _gather(
 			yield ast::ident_dup(mod);
 		},
 		path = strings::dup(modpath)!,
+		conf = srcs.conf,
 		srcs = srcs,
 		deps = deps,
 		is_dep = is_dep,

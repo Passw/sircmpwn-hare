@@ -2,6 +2,7 @@
 // (c) Hare authors <https://harelang.org>
 
 use encoding::utf8;
+use format::ini;
 use fs;
 use hare::ast;
 use hare::parse;
@@ -10,6 +11,7 @@ use io;
 use memio;
 use path;
 use strings;
+use wordexp;
 
 // A module was not found.
 export type not_found = !void;
@@ -49,6 +51,8 @@ export type error = !(
 	tag_has_dot |
 	tag_bad_format |
 	errcontext |
+	wordexp::error |
+	ini::error |
 );
 
 // A container struct for context, used by [[find]] and [[gather]].
@@ -121,6 +125,10 @@ fn _strerror(e: error, buf: *memio::stream) void = {
 		yield parse::strerror(e);
 	case let e: path::error =>
 		yield path::strerror(e);
+	case let e: ini::error =>
+		yield ini::strerror(e);
+	case let e: wordexp::error =>
+		yield wordexp::strerror(e);
 	case utf8::invalid =>
 		yield "Invalid UTF-8";
 	case not_found =>

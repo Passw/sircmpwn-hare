@@ -2,14 +2,18 @@
 // (c) Hare authors <https://harelang.org>
 
 use bytes;
+use errors;
+use format::ini;
 use fs;
 use hare::ast;
+use io;
 use os;
 use path;
 use sort;
 use sort::cmp;
 use strings;
 use time;
+use wordexp;
 
 // A file tag, e.g. +x86_64, or -libc.
 export type tag = struct {
@@ -21,6 +25,8 @@ export type tag = struct {
 
 // A set of sources for a module, filtered by a set of tags.
 export type srcset = struct {
+	// Module config (hare.ini) if present.
+	conf: config,
 	// The last time the list of source files changed. Note that this is not
 	// the last time that the source files themselves changed.
 	mtime: time::instant,
@@ -38,6 +44,8 @@ export type srcset = struct {
 	o: []str,
 	// linker scripts (.sc)
 	sc: []str,
+	// hare.ini
+	ini: str,
 };
 
 // Frees the resources associated with a [[srcset]].
@@ -48,6 +56,7 @@ export fn finish_srcset(srcs: *srcset) void = {
 	strings::freeall(srcs.s);
 	strings::freeall(srcs.o);
 	strings::freeall(srcs.sc);
+	free(srcs.ini);
 };
 
 // Find the on-disk path and set of source files for a given module. The path is
@@ -105,7 +114,36 @@ fn path_find(ctx: *context, buf: *path::buffer) (srcset | error) = {
 	};
 	let res = srcset { mtime = time::INSTANT_MIN, ... };
 
-	_findsrcs(buf, ctx.tags, &srcs, &res, 0)?;
+	path::push(buf, "hare.ini")?;
+	match (os::open(path::string(buf))) {
+	case let in: io::file =>
+		defer io::close(in)!;
+
+		const st = os::fstat(in)?;
+		res.mtime = st.mtime;
+
+		res.ini = strings::dup(path::string(buf))!;
+		path::pop(buf);
+
+		res.conf = match (load_config(buf, in)) {
+		case let conf: config =>
+			yield conf;
+		case let err: (ini::error | wordexp::error) =>
+			return err;
+		case nomem => abort();
+		};
+	case errors::noentry =>
+		path::pop(buf);
+	case let err: fs::error =>
+		return err;
+	};
+
+	if (len(res.conf.srcs) != 0) {
+		_collectsrcs(buf, &srcs, &res)?;
+	} else {
+		_findsrcs(buf, ctx.tags, &srcs, &res, 0)?;
+	};
+
 	for (let i = 0z; i < len(srcs); i += 1) {
 		if (len(srcs[i].3) != 1) {
 			return alloc(srcs[i].3...)!: file_conflict;
@@ -124,10 +162,10 @@ fn path_find(ctx: *context, buf: *path::buffer) (srcset | error) = {
 		append(out, srcs[i].3[0])!;
 	};
 
-	// module needs either a hare source file or a README in order to be
-	// valid. used to allow eg. shadowing foo::bar:: without accidentally
-	// shadowing foo::
-	if (len(res.ha) == 0) {
+	// module needs either a hare source file, a README, or hare.ini in
+	// order to be valid. used to allow eg. shadowing foo::bar:: without
+	// accidentally shadowing foo::
+	if (len(res.ha) == 0 && res.ini == "") {
 		path::push(buf, "README")?;
 		defer path::pop(buf);
 		if (!os::exists(path::string(buf))) {
@@ -142,6 +180,63 @@ fn path_find(ctx: *context, buf: *path::buffer) (srcset | error) = {
 	sort::sort(res.o, size(str), &cmp::strs)!;
 	sort::sort(res.sc, size(str), &cmp::strs)!;
 	return res;
+};
+
+// Collect sources from a module manifest.
+fn _collectsrcs(
+	buf: *path::buffer,
+	srcs: *[](str, str, size, []str),
+	res: *srcset,
+) (void | error) = {
+	for (let src .. res.conf.srcs) {
+		let orig = *buf;
+		defer *buf = orig;
+		path::push(buf, src)!;
+
+		// TODO: stat intermediate directories and update module mtime
+		const pathstr = path::string(buf);
+		const stat = match (os::stat(pathstr)) {
+		case let st: fs::filestat =>
+			yield st;
+		case let err: fs::error =>
+			const ctx = strings::dup(pathstr)!;
+			return attach(ctx, err);
+		};
+
+		let tmp = pathstr;
+		for (fs::islink(stat.mode)) {
+			if (time::compare(res.mtime, stat.mtime) < 0) {
+				res.mtime = stat.mtime;
+			};
+			tmp = os::realpath(tmp)?;
+			stat = os::stat(tmp)?;
+		};
+
+		if (fs::isfile(stat.mode)) {
+			const ext = match (path::pop_ext(buf)) {
+			case void =>
+				return;
+			case let ext: str =>
+				yield ext;
+			};
+			switch (ext) {
+			case "ha", "s", "o", "sc" => void;
+			case =>
+				continue;
+			};
+			const base = path::pop(buf) as str;
+			path::push(buf, base)?;
+			path::push_ext(buf, ext)?;
+
+			let path = path::string(buf);
+			append(srcs, (
+				strings::dup(base)!,
+				strings::dup(ext)!,
+				1,
+				alloc([strings::dup(path)!])!,
+			))!;
+		};
+	};
 };
 
 // simple implementation but the reasons for it are delicate
