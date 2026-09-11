@@ -26,6 +26,7 @@ export type config = struct {
 // Loads a module configuration from a hare.ini file. Free the return value with
 // [[config_finish]].
 export fn load_config(
+	ctx: *context,
 	buf: *path::buffer,
 	in: io::handle,
 ) (config | error) = {
@@ -36,6 +37,7 @@ export fn load_config(
 	defer os::chdir(cwd)!;
 	os::chdir(path::string(buf))!;
 
+	let tag_matched = false;
 	for (true) {
 		const (sec, key, val) = match (ini::next(&sc)) {
 		case let ent: ini::entry =>
@@ -48,6 +50,16 @@ export fn load_config(
 
 		if (sec == "") {
 			load_conf_section(&conf, buf, key, val)?;
+		} else if (sec == "^") {
+			if (!tag_matched) {
+				load_conf_section(&conf, buf, key, val)?;
+			};
+		} else {
+			const tags = parse_tags(sec)!;
+			if (tags_compat(ctx.tags, tags)) {
+				load_conf_section(&conf, buf, key, val)?;
+				tag_matched = true;
+			};
 		};
 	};
 	return conf;

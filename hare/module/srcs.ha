@@ -125,7 +125,7 @@ fn path_find(ctx: *context, buf: *path::buffer) (srcset | error) = {
 		res.ini = strings::dup(path::string(buf))!;
 		path::pop(buf);
 
-		res.conf = match (load_config(buf, in)) {
+		res.conf = match (load_config(ctx, buf, in)) {
 		case let conf: config =>
 			yield conf;
 		case let err: (ini::error | wordexp::error) =>
