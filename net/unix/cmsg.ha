@@ -41,3 +41,25 @@ export fn recvfiles(buf: *net::msghdr, nfile: size) []io::file = {
 		return [];
 	};
 };
+
+// Returns the number of file descriptors in a message header.
+// Must be called on a header previously populated by [[net::recvmsg]].
+export fn countfiles(mhdr: *net::msghdr) size = {
+	// Start of ancillary data: size of cmsghdr rounded up to CMSG_ALIGN boundary.
+	const hdrsz = (size(sys::cmsghdr) + size(size) - 1) & ~(size(size) - 1);
+
+	const ctl_len = mhdr.native.msg_controllen: size;
+	if (ctl_len <= hdrsz || len(mhdr.control) == 0) {
+		return 0;
+	};
+
+	for (let i = 0z; i < ctl_len) {
+		const cmsg = &mhdr.control[i]: *sys::cmsg;
+		if (cmsg.hdr.cmsg_level == sys::SOL_SOCKET &&
+				cmsg.hdr.cmsg_type == sys::SCM_RIGHTS) {
+			return (cmsg.hdr.cmsg_len - hdrsz) / size(io::file);
+		};
+		i += cmsg.hdr.cmsg_len;
+	};
+	return 0;
+};
