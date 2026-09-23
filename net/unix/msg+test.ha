@@ -4,10 +4,13 @@
 use io;
 use net;
 use sys;
+use test;
 
 // Pass a file descriptor over a socket pair via SCM_RIGHTS, write a newline
 // into it and ensure that this is received on the other side.
 @test fn scm_rights() void = {
+	test::require("integration");
+
 	const (tx, rx) = socketpair()!;
 	defer net::close(tx)!;
 	defer net::close(rx)!;
