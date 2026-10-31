@@ -203,7 +203,7 @@ fn parse_authority(
 				userinfo = percent_decode(memio::string(&buf)!)?;
 				memio::reset(&buf);
 				has_userinfo = true;
-			case '/' =>
+			case '/', '?' =>
 				// This was just host
 				strings::prev(in);
 				host = percent_decode(memio::string(&buf)!)?;

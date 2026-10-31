@@ -110,6 +110,17 @@ use net::ip;
 			...
 		}
 	)!;
+	test_uri_roundtrip(
+		"tuba://auth_code?code=XXXX&state=",
+		uri {
+			scheme = "tuba",
+			host = "auth_code",
+			path = "",
+			fragment = "",
+			query = "code=XXXX&state=",
+			...
+		}
+	)!;
 };
 
 @test fn invalid() void = {
