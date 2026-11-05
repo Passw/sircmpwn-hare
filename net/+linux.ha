@@ -33,14 +33,19 @@ export fn accept(sock: socket, flags: sockflag = 0) (socket | error) = {
 
 fn msg_to_native(msg: *msghdr) *sys::msghdr = {
 	let native = &msg.native;
-	if (len(msg.vectors) != 0) {
-		native.msg_iov = msg.vectors: *[*]sys::iovec;
-		native.msg_iovlen = len(msg.vectors);
+	native.msg_iov = if (len(msg.vectors) != 0) {
+	        yield msg.vectors: *[*]sys::iovec;
+	} else {
+	        yield null;
 	};
-	if (len(msg.control) != 0) {
-		native.msg_control = msg.control: *[*]u8;
-		native.msg_controllen = len(msg.control);
+	native.msg_iovlen = len(msg.vectors);
+
+	native.msg_control = if (len(msg.control) != 0) {
+	        yield msg.control: *[*]u8;
+	} else {
+	        yield null;
 	};
+	native.msg_controllen = len(msg.control);
 	return native;
 };
 
