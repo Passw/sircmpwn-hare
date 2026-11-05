@@ -40,7 +40,7 @@ tasks:
     sudo make install PREFIX=/usr
 - check: |
     cd hare
-    make -j2 check
+    HARETEST_INCLUDE=integration make -j2 check
 submitter:
   git.sr.ht:
     allow-refs:

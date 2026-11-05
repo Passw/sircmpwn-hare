@@ -47,10 +47,10 @@ tasks:
     sudo make install
 - check: |
     cd hare
-    make -j2 check
+    HARETEST_INCLUDE=integration make -j2 check
 - check_with_libc: |
     cd hare
-    hare test -lc
+    HARETEST_INCLUDE=integration hare test -lc
 - parsechk: |
     cd hare
     hare run cmd/parsechk
