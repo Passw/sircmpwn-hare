@@ -11,6 +11,9 @@ use sys;
 // See [[allocfiles]] and [[recvfiles]] for details on the recipient
 // ([[net::recvmsg]]) operation.
 export fn addfiles(buf: *net::msghdr, files: io::file...) (void | nomem) = {
+	if (len(files) == 0) {
+		return;
+	};
 	const msgsz = size(io::file) * len(files);
 	let buf = net::addcontrol(buf, msgsz, sys::SOL_SOCKET, sys::SCM_RIGHTS)?;
 	let buf = buf: *[*]io::file;
@@ -25,6 +28,9 @@ export fn addfiles(buf: *net::msghdr, files: io::file...) (void | nomem) = {
 // This function concerns receiving files, see [[addfiles]] for information
 // about sending files.
 export fn allocfiles(buf: *net::msghdr, nfile: size) (void | nomem) = {
+	if (nfile == 0) {
+		return;
+	};
 	const msgsz = size(io::file) * nfile;
 	net::addcontrol(buf, msgsz, sys::SOL_SOCKET, sys::SCM_RIGHTS)?;
 };
