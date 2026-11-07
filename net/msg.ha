@@ -83,17 +83,90 @@ export fn addcontrol(
 ) ([]u8 | nomem) = {
 	const prev = len(msg.control);
 	const space = cmsg_space(length);
+	const hdrsz = cmsg_align(size(sys::cmsghdr));
 	append(msg.control, [0...], space)?;
 	let newbuf = msg.control[prev..prev + space]: *[*]sys::cmsghdr;
 	newbuf[0].cmsg_len = cmsg_len(length): uint;
 	newbuf[0].cmsg_level = level;
 	newbuf[0].cmsg_type = ctype;
-	let user = &msg.control[prev + cmsg_align(size(sys::cmsghdr))]: *[*]u8;
-	return user[..length];
+	return msg.control[prev + hdrsz..prev + hdrsz + length];
 };
 
-// Retrieves a control header from a message, returning a slice of
-// domain-specific data.
+// Control data is structurally invalid.
+export type badformat = !void;
+
+// Kernel truncated the control data during [[recvmsg]].
+export type truncated = !void;
+
+// Errors from control message iteration.
+export type controlerror = !(badformat | truncated);
+
+// Control message from a [[msghdr]].
+export type control = struct {
+	hdr: *sys::cmsghdr,
+	data: []u8,
+};
+
+// Iterator over a [[msghdr]].
+// See [[controls]].
+export type control_iter = struct {
+	msg: *msghdr,
+	off: size,
+};
+
+// Returns an iterator over the control messages in a [[msghdr]].
+// The iterator is valid until the message is modified or reused.
+export fn controls(msg: *msghdr) control_iter = {
+	return control_iter {
+		msg = msg,
+		off = 0,
+	};
+};
+
+// Returns the next control message in an iterator.
+export fn nextcontrol(iter: *control_iter)
+	(control | done | controlerror) = {
+	const msg = iter.msg;
+	const total = msg.native.msg_controllen: size;
+
+	if (msg.native.msg_flags & sys::MSG_CTRUNC != 0) {
+		iter.off = total;
+		return truncated;
+	};
+
+	if (total > len(msg.control)) {
+		iter.off = total;
+		return badformat;
+	};
+	if (iter.off >= total) {
+		return done;
+	};
+	if (total - iter.off < size(sys::cmsghdr)) {
+		iter.off = total;
+		return badformat;
+	};
+
+	const cbuf = msg.control: *[*]u8;
+	const hdr = &cbuf[iter.off]: *sys::cmsghdr;
+	const clen = hdr.cmsg_len: size;
+	const hdrsz = cmsg_align(size(sys::cmsghdr));
+	const step = cmsg_align(clen);
+	if (clen < hdrsz || step > total - iter.off) {
+		iter.off = total;
+		return badformat;
+	};
+
+	const start = iter.off;
+	iter.off += step;
+	return control {
+		hdr = hdr,
+		data = cbuf[start + hdrsz..start + clen],
+	};
+};
+
+// Retrieves the first control message matching the given level and type with
+// at least length bytes of data. Use [[controls]] to iterate over all control
+// messages.
 //
 // This is a low-level interface, and is not generally used by users. More
 // often, users will call functions like [[net::unix::addfiles]] or
@@ -104,18 +177,14 @@ export fn getcontrol(
 	length: size,
 	level: int,
 	ctype: int,
-) ([]u8 | void) = {
-	let native = &msg.native;
-	let cbuf = native.msg_control: *[*]u8;
-	for (let i = 0z; i < native.msg_controllen) {
-		let next = &cbuf[i]: *sys::cmsg;
-		if (next.hdr.cmsg_len >= length
-				&& next.hdr.cmsg_level == level
-				&& next.hdr.cmsg_type == ctype) {
-			const off = i + cmsg_align(size(sys::cmsghdr));
-			return cbuf[off..off + length];
+) ([]u8 | void | controlerror) = {
+	let iter = controls(msg);
+	for (const cmsg => nextcontrol(&iter)?) {
+		if (cmsg.hdr.cmsg_level == level
+				&& cmsg.hdr.cmsg_type == ctype
+				&& len(cmsg.data) >= length) {
+			return cmsg.data[..length];
 		};
-		i += next.hdr.cmsg_len;
 	};
 };
 

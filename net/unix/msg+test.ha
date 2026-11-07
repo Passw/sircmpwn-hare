@@ -37,7 +37,9 @@ use test;
 	allocfiles(&in, 1)!;
 	net::recvmsg(rx, &in)!;
 
-	const files = recvfiles(&in, 1);
+	assert(countfiles(&in)! == 1);
+	assert(len(recvfiles(&in, 2)!) == 0);
+	const files = recvfiles(&in, 1)!;
 	assert(len(files) == 1);
 	const gotfd = files[0];
 	defer io::close(gotfd)!;
@@ -48,4 +50,14 @@ use test;
 	let got: [1]u8 = [0];
 	assert(io::read(gotfd, got)! as size == 1);
 	assert(got[0] == '\n');
+};
+
+@test fn empty_files() void = {
+	let msg = net::newmsg();
+	defer net::finish(&msg);
+
+	addfiles(&msg)!;
+	assert(len(msg.control) == 0);
+	allocfiles(&msg, 0)!;
+	assert(len(msg.control) == 0);
 };

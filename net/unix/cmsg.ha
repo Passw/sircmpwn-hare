@@ -37,7 +37,9 @@ export fn allocfiles(buf: *net::msghdr, nfile: size) (void | nomem) = {
 
 // Receives files from a control message which was previously prepared with
 // [[allocfiles]].
-export fn recvfiles(buf: *net::msghdr, nfile: size) []io::file = {
+export fn recvfiles(buf: *net::msghdr, nfile: size) (
+	[]io::file | net::controlerror
+) = {
 	match (net::getcontrol(buf,
 		nfile * size(io::file),
 		sys::SOL_SOCKET, sys::SCM_RIGHTS)) {
@@ -45,27 +47,22 @@ export fn recvfiles(buf: *net::msghdr, nfile: size) []io::file = {
 		return (buf: *[*]io::file)[..nfile];
 	case void =>
 		return [];
+	case let err: net::controlerror =>
+		return err;
 	};
 };
 
-// Returns the number of file descriptors in a message header.
-// Must be called on a header previously populated by [[net::recvmsg]].
-export fn countfiles(mhdr: *net::msghdr) size = {
-	// Start of ancillary data: size of cmsghdr rounded up to CMSG_ALIGN boundary.
-	const hdrsz = (size(sys::cmsghdr) + size(size) - 1) & ~(size(size) - 1);
-
-	const ctl_len = mhdr.native.msg_controllen: size;
-	if (ctl_len <= hdrsz || len(mhdr.control) == 0) {
-		return 0;
-	};
-
-	for (let i = 0z; i < ctl_len) {
-		const cmsg = &mhdr.control[i]: *sys::cmsg;
-		if (cmsg.hdr.cmsg_level == sys::SOL_SOCKET &&
-				cmsg.hdr.cmsg_type == sys::SCM_RIGHTS) {
-			return (cmsg.hdr.cmsg_len - hdrsz) / size(io::file);
+// Returns the number of file descriptors in the first SCM_RIGHTS control
+// message in a header. Must be called on a header previously populated by
+// [[net::recvmsg]].
+// Returns an error if the control data is invalid or was truncated.
+export fn countfiles(mhdr: *net::msghdr) (size | net::controlerror) = {
+	let iter = net::controls(mhdr);
+	for (const cmsg => net::nextcontrol(&iter)?) {
+		if (cmsg.hdr.cmsg_level == sys::SOL_SOCKET
+				&& cmsg.hdr.cmsg_type == sys::SCM_RIGHTS) {
+			return len(cmsg.data) / size(io::file);
 		};
-		i += cmsg.hdr.cmsg_len;
 	};
 	return 0;
 };
