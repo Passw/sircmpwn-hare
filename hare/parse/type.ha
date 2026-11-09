@@ -25,7 +25,7 @@ fn prototype(lexer: *lex::lexer) (ast::func_type | error) = {
 		case void =>
 			yield want(lexer, ltok::NAME)?.1 as str;
 		case lex::token =>
-			yield "";
+			yield strings::dup("_")!;
 		};
 
 		want(lexer, ltok::COLON)?;

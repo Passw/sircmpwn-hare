@@ -119,6 +119,7 @@ fn tup_to_import(tup: import_tuple) ast::import = ast::import {
 		"@test fn foo(...) void;\n\n"
 		"fn foo(_: bar) void;\n\n"
 		"fn foo(_: bar::baz) void;\n\n"
+		"fn buzz(_: bar) void = void;\n\n"
 		"export fn main() void = void;\n\n"
 		"fn long(\n"
 			"\tfirst: *!void,\n"

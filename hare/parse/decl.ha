@@ -97,11 +97,6 @@ fn decl_func(
 	let tok = want(lexer, ltok::EQUAL, ltok::SEMICOLON)?;
 	let body = switch (tok.0) {
 	case ltok::EQUAL =>
-		for (let param &.. prototype.params) {
-			synassert(param.loc.start,
-				len(param.name) > 0,
-				"Expected parameter name in function declaration")?;
-		};
 		yield alloc(expr(lexer)?)!;
 	case ltok::SEMICOLON =>
 		lex::unlex(lexer, tok);
