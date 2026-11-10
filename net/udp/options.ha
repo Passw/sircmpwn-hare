@@ -14,6 +14,9 @@ export type reuseaddr = void;
 // the addressed u16 will be filled in with the port.
 export type portassignment = *u16;
 
+// Enables this socket to send to the broadcast address.
+export type broadcast = void;
+
 // Options for [[connect]].
 export type connect_option = net::sockflag;
 
@@ -22,6 +25,7 @@ export type listen_option = (
 	reuseport |
 	reuseaddr |
 	portassignment |
+	broadcast |
 	net::sockflag);
 
 // TODO: Add send/recv flags

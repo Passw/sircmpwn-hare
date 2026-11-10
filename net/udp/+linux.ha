@@ -76,6 +76,8 @@ export fn listen(
 			setsockopt(sockfd, sys::SO_REUSEADDR, true)?;
 		case reuseport =>
 			setsockopt(sockfd, sys::SO_REUSEPORT, true)?;
+		case broadcast =>
+			setsockopt(sockfd, sys::SO_BROADCAST, true)?;
 		case => void;
 		};
 	};
