@@ -2,6 +2,8 @@
 // (c) Hare authors <https://harelang.org>
 
 use bytes;
+use crypto::random;
+use crypto::x25519;
 use encoding::hex;
 use strings;
 
@@ -63,4 +65,23 @@ use strings;
 		0x07, 0xf8, 0x88, 0xaa, 0xb1, 0x04, 0xe2, 0x4d,
 	];
 	assert(verify_buf(&pubkey, msg, &signature) is void);
+};
+
+@test fn x25519_conversions() void = {
+	let seed: [SEEDSZ]u8 = [0...];
+	random::buffer(seed);
+
+	let ed_skey: privkey = [0...];
+	privkey_init(ed_skey, seed);
+	let ed_pkey = privkey_getpubkey(ed_skey);
+
+	let x_skey: x25519::key = [0...];
+	privkey_to_x25519(ed_skey, &x_skey);
+	let x_pkey: x25519::key = [0...];
+	x25519::pubkey(x_pkey, x_skey);
+
+	let x_from_ed: x25519::key = [0...];
+	pubkey_to_x25519(ed_pkey, &x_from_ed);
+
+	assert(bytes::equal(x_from_ed, x_pkey));
 };
