@@ -24,7 +24,6 @@ const platforms: [_]platform = [
 	},
 	platform {
 		name = "DragonFly",
-		need_libc = false,
 		debug_supported = true,
 		...
 	},
