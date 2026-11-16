@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 // (c) Hare authors <https://harelang.org>
 
-// XXX: sigwaitinfo and sigtimedwait are not yet available in OpenBSD. Quoting
-// from OpenBSD's lib/libc/gen/sigwait.c: "need kernel to fill in more siginfo_t
-// bits first"
+// XXX: sigtimedwait is not yet available in OpenBSD. Quoting from OpenBSD's
+// lib/libc/gen/sigwait.c: "need kernel to fill in more siginfo_t bits first".
+// Also see: https://marc.info/?l=openbsd-tech&m=163283240306383&w=2
 
 // sigwait
 
