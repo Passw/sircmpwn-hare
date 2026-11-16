@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 // (c) Hare authors <https://harelang.org>
 
-// TODO: work when _NSIG != 32
+// TODO: work when NSIG != 32
+static assert(NSIG == 32);
 
 export fn alarm(sec: uint) uint = {
 	let nval = itimerval { ... };
