@@ -1454,6 +1454,8 @@ export fn munlockall() (void | errno) = {
 // shmctl
 // msgctl
 // sched_yield
+export @symbol("sched_yield") fn sched_yield() void;
+
 // getthrid
 // __thrwakeup
 // __threxit
