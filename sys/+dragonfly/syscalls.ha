@@ -715,3 +715,44 @@ export fn statvfs(path: path, buf: *vfsstat) (void | errno) = {
 export fn fstatvfs(fd: int, buf: *vfsstat) (void | errno) = {
 	wrap_return(syscall2(SYS_fstatvfs, fd: u64, buf: uintptr: u64))?;
 };
+
+export fn getitimer(
+	which: int,
+	cur: *itimerval,
+) (void | errno) = {
+	wrap_return(syscall2(SYS_getitimer, which: u64, cur: uintptr: u64))?;
+};
+
+export fn setitimer(
+	which: int,
+	newval: *itimerval,
+	oldval: nullable *itimerval,
+) (void | errno) = {
+	wrap_return(syscall3(SYS_setitimer,
+			which: u64,
+			newval: uintptr: u64,
+			oldval: uintptr: u64))?;
+};
+
+export fn sigwaitinfo(
+	set: *sigset,
+	info: nullable *siginfo,
+) (int | errno) = {
+	return wrap_return(syscall2(SYS_sigwaitinfo,
+		set: uintptr: u64,
+		info: uintptr: u64,
+	))?: int;
+};
+
+export fn sigtimedwait(
+	set: *sigset,
+	info: nullable *siginfo,
+	timeout: nullable *timespec,
+) (int | errno) = {
+	return wrap_return(syscall3(SYS_sigtimedwait,
+		set: uintptr: u64,
+		info: uintptr: u64,
+		timeout: uintptr: u64,
+	))?: int;
+};
+

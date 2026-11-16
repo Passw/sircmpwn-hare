@@ -1210,3 +1210,40 @@ export fn statfs(path: path, buf: *fsstat) (void | errno) = {
 export fn fstatfs(fd: int, buf: *fsstat) (void | errno) = {
 	wrap_return(syscall2(SYS_fstatfs, fd: u64, buf: uintptr: u64))?;
 };
+
+export fn getitimer(
+	which: int,
+	cur: *itimerval,
+) (void | errno) = {
+	wrap_return(syscall2(SYS_getitimer, which: u64, cur: uintptr: u64))?;
+};
+
+export fn setitimer(
+	which: int,
+	newval: *itimerval,
+	oldval: nullable *itimerval,
+) (void | errno) = {
+	wrap_return(syscall3(SYS_setitimer,
+			which: u64,
+			newval: uintptr: u64,
+			oldval: uintptr: u64))?;
+};
+
+export fn sigwaitinfo(
+	set: *sigset,
+	info: nullable *siginfo,
+) (int | errno) = {
+	return sigtimedwait(set, info, null);
+};
+
+export fn sigtimedwait(
+	set: *sigset,
+	info: nullable *siginfo,
+	timeout: nullable *timespec,
+) (int | errno) = {
+	return wrap_return(syscall3(SYS_rt_sigtimedwait,
+		set: uintptr: u64,
+		info: uintptr: u64,
+		timeout: uintptr: u64,
+	))?: int;
+};

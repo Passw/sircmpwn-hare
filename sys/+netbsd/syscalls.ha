@@ -713,3 +713,33 @@ export fn sched_setscheduler(pid: pid_t, policy: int, params: *sched_param) (int
 export fn sched_yield() void = {
 	syscall0(SYS_sched_yield);
 };
+
+export fn getitimer(
+	which: int,
+	cur: *itimerval,
+) (void | errno) = {
+	wrap_return(syscall2(SYS_compat_50_getitimer, which: u64, cur: uintptr: u64))?;
+};
+
+export fn setitimer(
+	which: int,
+	newval: *itimerval,
+	oldval: nullable *itimerval,
+) (void | errno) = {
+	wrap_return(syscall3(SYS_compat_50_setitimer,
+			which: u64,
+			newval: uintptr: u64,
+			oldval: uintptr: u64))?;
+};
+
+export fn sigtimedwait(
+	set: *sigset,
+	info: nullable *siginfo,
+	timeout: nullable *timespec,
+) (int | errno) = {
+	return wrap_return(syscall3(SYS_compat_50___sigtimedwait,
+		set: uintptr: u64,
+		info: uintptr: u64,
+		timeout: uintptr: u64,
+	))?: int;
+};
