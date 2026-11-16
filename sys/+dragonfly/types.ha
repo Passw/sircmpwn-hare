@@ -26,6 +26,15 @@ export type c_long = i64;
 export def NGROUPS_MAX: size = 16;
 export def NSIG: int = 64;
 
+export def ITIMER_REAL: int = 0;
+export def ITIMER_VIRTUAL: int = 1;
+export def ITIMER_PROF: int = 2;
+
+export type itimerval = struct {
+	it_interval: timeval,
+	it_value: timeval,
+};
+
 export type sigset = struct {
 	__bits: [4]uint,
 };

@@ -452,6 +452,15 @@ export type idtype = enum {
 	P_PIDFD = 3,
 };
 
+export def ITIMER_REAL: int = 0;
+export def ITIMER_VIRTUAL: int = 1;
+export def ITIMER_PROF: int = 2;
+
+export type itimerval = struct {
+	it_interval: timeval,
+	it_value: timeval,
+};
+
 export def SIG_BLOCK: int = 0;
 export def SIG_UNBLOCK: int = 1;
 export def SIG_SETMASK: int = 2;

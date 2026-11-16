@@ -14,15 +14,6 @@ export fn alarm(sec: uint) uint = {
 	return oval.it_value.tv_sec: uint;
 };
 
-export def ITIMER_REAL: int = 0;
-export def ITIMER_VIRTUAL: int = 1;
-export def ITIMER_PROF: int = 2;
-
-export type itimerval = struct {
-	it_interval: timeval,
-	it_value: timeval,
-};
-
 export fn sigwait(set: *sigset, sig: *int) (void | errno) = {
 	*sig = sigtimedwait(set, null, null)?;
 };

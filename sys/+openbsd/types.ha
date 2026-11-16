@@ -260,6 +260,15 @@ export type iovec = struct {
 	iov_len: size,
 };
 
+export def ITIMER_REAL: int = 0;
+export def ITIMER_VIRTUAL: int = 1;
+export def ITIMER_PROF: int = 2;
+
+export type itimerval = struct {
+	it_interval: timeval,
+	it_value: timeval,
+};
+
 export def NSIG: int = 32;
 
 export type sigact = struct {

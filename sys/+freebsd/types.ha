@@ -18,6 +18,15 @@ export type mode_t = u16;
 export type nfds_t = uint;
 export type rlim_t = u64;
 
+export def ITIMER_REAL: int = 0;
+export def ITIMER_VIRTUAL: int = 1;
+export def ITIMER_PROF: int = 2;
+
+export type itimerval = struct {
+	it_interval: timeval,
+	it_value: timeval,
+};
+
 export def NGROUPS_MAX: size = 1023;
 export def NSIG: int = 32;
 

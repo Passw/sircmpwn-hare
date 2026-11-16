@@ -30,6 +30,15 @@ export def PATH_MAX = 1024z;
 // Max bytes in a file name
 export def NAME_MAX: int = 511;
 
+export def ITIMER_REAL: int = 0;
+export def ITIMER_VIRTUAL: int = 1;
+export def ITIMER_PROF: int = 2;
+
+export type itimerval = struct {
+	it_interval: timeval,
+	it_value: timeval,
+};
+
 export def NGROUPS_MAX: size = 1023;
 export def NSIG: int = 32;
 
