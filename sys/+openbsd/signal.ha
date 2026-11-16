@@ -11,7 +11,7 @@
 
 export fn sigwait(set: *sigset, sig: *int) (void | errno) = {
 	let res = libc_sigwait(set, sig);
-	if (res != -1) {
+	if (res != 0) {
 		return *__errno(): errno;
 	};
 };
@@ -50,7 +50,7 @@ export fn setitimer(
 	oldval: nullable *itimerval,
 ) (void | errno) = {
 	let res = libc_setitimer(which, newval, oldval);
-	if (res != -1) {
+	if (res == -1) {
 		return *__errno(): errno;
 	};
 };
@@ -64,7 +64,7 @@ export fn setitimer(
 
 export fn getitimer(which: int, cur: *itimerval) (void | errno) = {
 	let res = libc_getitimer(which, cur);
-	if (res != -1) {
+	if (res == -1) {
 		return *__errno(): errno;
 	};
 };
