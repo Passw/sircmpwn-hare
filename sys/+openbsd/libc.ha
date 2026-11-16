@@ -8,6 +8,15 @@ export @symbol("arc4random_buf") fn arc4random_buf(
 	nbytes: size
 ) void;
 
+@symbol("sigwait") fn libc_sigwait(set: *sigset, sig: *int) int;
+
+export fn sigwait(set: *sigset, sig: *int) (void | errno) = {
+	let res = libc_sigwait(set, sig);
+	if (res != 0) {
+		return *__errno(): errno;
+	};
+};
+
 @symbol("ptsname") fn libc_ptsname(flides: int) *u8;
 
 export fn ptsname(flides: int) (*u8 | errno) = {

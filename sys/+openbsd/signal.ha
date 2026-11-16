@@ -5,17 +5,6 @@
 // lib/libc/gen/sigwait.c: "need kernel to fill in more siginfo_t bits first".
 // Also see: https://marc.info/?l=openbsd-tech&m=163283240306383&w=2
 
-// sigwait
-
-@symbol("sigwait") fn libc_sigwait(set: *sigset, sig: *int) int;
-
-export fn sigwait(set: *sigset, sig: *int) (void | errno) = {
-	let res = libc_sigwait(set, sig);
-	if (res != 0) {
-		return *__errno(): errno;
-	};
-};
-
 export fn alarm(sec: uint) uint = {
 	let nval = itimerval { ... };
 	let oval = itimerval { ... };
