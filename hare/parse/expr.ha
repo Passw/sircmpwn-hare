@@ -397,7 +397,7 @@ fn builtin(lexer: *lex::lexer) (ast::expr | error) = {
 	const tok = match (peek(lexer, ltok::ALIGN, ltok::ALLOC, ltok::APPEND,
 		ltok::FREE, ltok::DELETE, ltok::ABORT, ltok::ASSERT,
 		ltok::INSERT, ltok::STATIC, ltok::SIZE, ltok::LEN, ltok::OFFSET,
-		ltok::VASTART, ltok::VAARG, ltok::VAEND)?) {
+		ltok::VASTART, ltok::VAARG, ltok::VAEND, ltok::ATTR_DEFINED)?) {
 	case let tok: lex::token =>
 		yield tok;
 	case void =>
@@ -449,6 +449,17 @@ fn builtin(lexer: *lex::lexer) (ast::expr | error) = {
 		return ast::expr {
 			loc = loc_from(lexer, tok.2),
 			expr = expr: ast::vaend_expr: ast::variadic_expr,
+		};
+	case ltok::ATTR_DEFINED =>
+		want(lexer, ltok::ATTR_DEFINED)?;
+		want(lexer, ltok::LPAREN)?;
+		const ident = ident(lexer)?;
+		want(lexer, ltok::RPAREN)?;
+		return ast::expr {
+			loc = loc_from(lexer, tok.2),
+			expr = ast::defined_expr {
+				targ = ident,
+			},
 		};
 	case => abort(); // Invariant
 	};

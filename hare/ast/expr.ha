@@ -266,6 +266,13 @@ export type continue_expr = label;
 // 	defer foo
 export type defer_expr = *expr;
 
+// An @defined(ident) expression.
+//
+// 	@defined(foo::bar)
+export type defined_expr = struct {
+	targ: ident,
+};
+
 // A delete expression.
 //
 // 	delete(foo[10])
@@ -452,12 +459,12 @@ export type expr = struct {
 	expr: (access_expr | align_expr | alloc_expr | append_expr |
 		assert_expr | assign_expr | binarithm_expr | binding_expr |
 		break_expr | call_expr | cast_expr | literal_expr |
-		continue_expr | defer_expr | delete_expr | for_expr |
-		free_expr | error_assert_expr | if_expr | insert_expr |
-		compound_expr | match_expr | len_expr | size_expr |
-		offset_expr | propagate_expr | return_expr | slice_expr |
-		switch_expr | unarithm_expr | undefined_expr | variadic_expr |
-		yield_expr),
+		continue_expr | defer_expr | defined_expr | delete_expr |
+		for_expr | free_expr | error_assert_expr | if_expr |
+		insert_expr | compound_expr | match_expr | len_expr |
+		size_expr | offset_expr | propagate_expr | return_expr |
+		slice_expr | switch_expr | unarithm_expr | undefined_expr |
+		variadic_expr | yield_expr),
 };
 
 // Frees resources associated with a Hare [[expr]]ession.
@@ -579,6 +586,8 @@ export fn expr_finish(e: nullable *expr) void = {
 		case let d: defer_expr =>
 			expr_finish(d);
 			free(d);
+		case let d: defined_expr =>
+			ident_free(d.targ);
 		case let d: delete_expr =>
 			expr_finish(d.object);
 			free(d.object);

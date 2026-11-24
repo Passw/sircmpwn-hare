@@ -89,6 +89,7 @@
 	vastart();
 	vaarg(va, int);
 	vaend(va);
+	@defined(foo::bar);
 };
 `);
 };

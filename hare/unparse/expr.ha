@@ -299,6 +299,12 @@ fn _expr(ctx: *context, syn: *synfunc, e: *ast::expr) (size | io::error) = {
 		z += _expr(ctx, syn, e.object)?;
 		z += syn(ctx, ")", synkind::PUNCTUATION)?;
 		return z;
+	case let e: ast::defined_expr =>
+		let z = syn(ctx, "@defined", synkind::KEYWORD)?;
+		z += syn(ctx, "(", synkind::PUNCTUATION)?;
+		z += _ident(ctx, syn, e.targ, synkind::IDENT)?;
+		z += syn(ctx, ")", synkind::PUNCTUATION)?;
+		return z;
 	case let e: ast::error_assert_expr =>
 		let z = 0z;
 		const needs_parens = !is_postfix(e);
