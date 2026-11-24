@@ -22,8 +22,6 @@ def CHUNKSZ: size = 1 << 21;
 // Byte to fill allocations with while they're not in use.
 def POISON: u8 = 0x69;
 
-// Allocates n bytes of memory and returns a pointer to them, or null if there
-// is insufficient memory.
 export fn malloc(n: size) nullable *opaque = {
 	if (n == 0) return null;
 	if (size_islarge(n)) {
@@ -78,8 +76,6 @@ export fn malloc(n: size) nullable *opaque = {
 	return &m.user;
 };
 
-// Frees an allocation returned by [[malloc]]. Freeing any other pointer, or
-// freeing a pointer that's already been freed, will cause an abort.
 export @symbol("rt.free") fn free_(p: nullable *opaque) void = {
 	let m = match (p) {
 	case null =>
@@ -127,12 +123,6 @@ export @symbol("rt.free") fn free_(p: nullable *opaque) void = {
 	};
 };
 
-// Changes the allocation size of a pointer to n bytes. If n is smaller than
-// the prior allocation, it is truncated; otherwise the allocation is expanded
-// and the values of the new bytes are undefined. May return a different pointer
-// than the one given if there is insufficient space to expand the pointer
-// in-place. Returns null if there is insufficient memory to support the
-// request.
 export fn realloc(p: nullable *opaque, n: size) nullable *opaque = {
 	if (n == 0) {
 		free(p);
@@ -159,7 +149,7 @@ export fn realloc(p: nullable *opaque, n: size) nullable *opaque = {
 
 // Gets the metadata for a given allocation. The provided pointer must have been
 // returned by [[malloc]] or [[realloc]] and must not have been freed.
-export fn getmeta(p: *opaque) *meta = {
+fn getmeta(p: *opaque) *meta = {
 	let m = (p: uintptr - META): *meta;
 	validatemeta(m, false);
 	assert(m.sz & 0b1 == 0,

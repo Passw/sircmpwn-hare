@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
 // (c) Hare authors <https://harelang.org>
 
-// Header of a [[chunk]] which counts the number of active allocations and links
-// to the previous and next chunks.
 export type chunk_header = struct {
+	// Header of a [[chunk]] which counts the number of active allocations and links
+	// to the previous and next chunks.
+
 	// Offset in the chunk at which the last allocated object ends.
 	previous: nullable *chunk,
 	next: nullable *chunk,
@@ -12,20 +13,25 @@ export type chunk_header = struct {
 	allocs: u32,
 };
 
-// A group of blocks that were allocated together.
 export type chunk = union {
+	// A group of blocks that were allocated together.
+
 	padding: chunk_header,
 	data: [*]u8,
 };
 
-// Metadata for a block.
+static assert(offset((null: *chunk).data) % size(u64) == 0);
+
 export type meta = struct {
+	// Metadata for a block.
 	union {
 		sz: size,
 		next: uintptr,
 	},
 	user: [*]u8,
 };
+
+static assert(offset((null: *meta).user) % size(u64) == 0);
 
 export type memory_heap = struct {
 	// Number of allocations currently in flight.
