@@ -27,21 +27,13 @@ fn attr_symbol(lexer: *lex::lexer) (str | error) = {
 };
 
 // Parses a command-line definition
-export fn define(
-	lexer: *lex::lexer,
-	require_type: bool = false,
-) (ast::decl_const | error) = {
+export fn define(lexer: *lex::lexer) (ast::decl_const | error) = {
 	const ident = ident(lexer)?;
-	const _type: nullable *ast::_type = if (require_type) {
-		want(lexer, ltok::COLON)?;
+	const _type: nullable *ast::_type = match (try(lexer, ltok::COLON)?) {
+	case lex::token =>
 		yield alloc(_type(lexer)?)!;
-	} else {
-		yield match (try(lexer, ltok::COLON)?) {
-		case lex::token =>
-			yield alloc(_type(lexer)?)!;
-		case void =>
-			yield null;
-		};
+	case void =>
+		yield null;
 	};
 	want(lexer, ltok::EQUAL)?;
 	const init: *ast::expr = alloc(expr(lexer)?)!;

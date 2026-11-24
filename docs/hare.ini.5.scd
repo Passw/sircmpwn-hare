@@ -73,16 +73,16 @@ twice, both lists of source files are merged and included in the build).
 	/bin/sh on POSIX systems), allowing for globbing, variable
 	substitutions, subcommands, and so on.
 
-*ident:type = value*
+*def ident[:type] = value*
 	Declares a constant. This constant is visible only to the module to
 	which the *hare.ini* file applies. To export it to other users, declare
 	it in your Hare code:
 
 	```
 	// hare.ini
-	MY_DEF: bool = true
+	def MY_DEF: bool = true
 	// example.ha
-	export MY_DEF: bool = false;
+	export def MY_DEF: bool = false;
 	```
 
 	If you don't define MY_DEF in hare.ini, the default value of false

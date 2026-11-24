@@ -72,7 +72,7 @@ fn load_conf_section(
 	val: str,
 ) (void | error) = {
 	const key = strings::trim(key);
-	if (strings::contains(key, ":")) {
+	:define {
 		const path = path::string(buf);
 		const define = fmt::asprintf("{}={}", key, val)!;
 		defer free(define);
@@ -82,7 +82,14 @@ fn load_conf_section(
 		defer bufio::finish(&sc);
 		const lexer = lex::init(&sc, path);
 		defer lex::finish(&lexer);
-		append(conf.defs, parse::define(&lexer, true)?)!;
+		match (parse::try(&lexer, lex::ltok::DEF)) {
+		case (void | parse::error) =>
+			yield :define;
+		case lex::token => void;
+		};
+
+		const define = parse::define(&lexer)?;
+		append(conf.defs, define)!;
 		return;
 	};
 
