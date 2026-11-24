@@ -82,7 +82,7 @@ fn load_conf_section(
 		defer bufio::finish(&sc);
 		const lexer = lex::init(&sc, path);
 		defer lex::finish(&lexer);
-		append(conf.defs, parse::define(&lexer)?)!;
+		append(conf.defs, parse::define(&lexer, true)?)!;
 		return;
 	};
 

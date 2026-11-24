@@ -59,7 +59,8 @@ twice, both lists of source files are merged and included in the build).
 	libs = -L/usr/local/lib -lSDL3 -lzlib
 	```
 
-	The value is subject to shell expansion, allowing for globbing, variable
+	The value is subject to shell expansion (using the system shell, e.g.
+	/bin/sh on POSIX systems), allowing for globbing, variable
 	substitutions, subcommands, and so on.
 
 *sources*
@@ -68,10 +69,11 @@ twice, both lists of source files are merged and included in the build).
 	according to the same algorithm used for automatic modules. See
 	*hare-module*(5).
 
-	The value is subject to shell expansion, allowing for globbing, variable
+	The value is subject to shell expansion (using the system shell, e.g.
+	/bin/sh on POSIX systems), allowing for globbing, variable
 	substitutions, subcommands, and so on.
 
-*ident[:type] = value*
+*ident:type = value*
 	Declares a constant. This constant is visible only to the module to
 	which the *hare.ini* file applies. To export it to other users, declare
 	it in your Hare code:
