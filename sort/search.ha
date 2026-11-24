@@ -3,6 +3,11 @@
 
 // Performs a binary search over a sorted slice. If the key is found, index of
 // the matching item in the slice is returned. Otherwise, void is returned.
+//
+// The [[cmpfunc]] is called with the key in the first parameter, and the slice
+// member currently under consideration in the second parameter. It is not
+// necessary for the key to have the same type as the slice members provided
+// that the cmpfunc accounts for this.
 export fn search(
 	in: []const opaque,
 	sz: size,
