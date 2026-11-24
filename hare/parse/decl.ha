@@ -33,15 +33,15 @@ export fn define(
 ) (ast::decl_const | error) = {
 	const ident = ident(lexer)?;
 	const _type: nullable *ast::_type = if (require_type) {
+		want(lexer, ltok::COLON)?;
+		yield alloc(_type(lexer)?)!;
+	} else {
 		yield match (try(lexer, ltok::COLON)?) {
 		case lex::token =>
 			yield alloc(_type(lexer)?)!;
 		case void =>
 			yield null;
 		};
-	} else {
-		want(lexer, ltok::COLON)?;
-		yield alloc(_type(lexer)?)!;
 	};
 	want(lexer, ltok::EQUAL)?;
 	const init: *ast::expr = alloc(expr(lexer)?)!;
